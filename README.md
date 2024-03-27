@@ -1,6 +1,6 @@
 - [Get Started](#get-started)
   - [Installation](#installation)
-  - [Download COCO Dataset](#download-coco-dataset)
+  - [Download COCO](#download-coco)
 - [Training](#training)
   - [Normal training](#normal-training)
   - [CL Training](#cl-training)
@@ -19,10 +19,9 @@ pip install -r requirements.txt
 ```
 <!-- pipreqs for get requirements.txt -->
 
-## Download COCO Dataset
+## Download COCO
 ```bash
-mkdir coco
-%cd coco
+mkdir coco && cd coco
 
 wget http://images.cocodataset.org/zips/train2017.zip
 wget http://images.cocodataset.org/zips/val2017.zip
@@ -39,7 +38,7 @@ Note: Change COCO path on `configs/dataset/coco_detection.yml`
 ## Normal training
 1. Training 
 ```bash
-python scripts/train.py -t /path/to/ckpt
+python scripts/train.py -t /path/to/ckpt/objects365
 ```
 2. Evaluate 
 ```bash
@@ -51,9 +50,10 @@ python scripts/train.py -r /path/to/ckpt/training --test-only
 2. Normal training for first task `t` classes 
 3. For next task
    1. Load checkpoint trained from previous task (manual)
-   2. Config `class_ids`, `buffer_ids` on `coco_cache.py`
+   2. Config `class_ids`, `buffer_ids` based on class order
    3. Set `True` for `fake_query` and `distill_attn`
-   4. Training with same scripts above
+   4. Training with same normal training script
+   5. If you want evaluate, change `class_ids` to full classes
 
 ## Contributors 
 <a href="https://github.com/tuanlda78202/MLR/graphs/contributors">
