@@ -35,8 +35,8 @@ class CocoCache(CCD):
         ids_list=None,
         class_ids=None,
         buffer_ids=None,
-        buffer_size=100,
-        buffer_mode=False,
+        buffer_rate=0.1,
+        buffer_mode=True,
     ):
         super(CocoCache, self).__init__(root, transforms, transform, target_transform)
         from pycocotools.coco import COCO
@@ -49,7 +49,7 @@ class CocoCache(CCD):
             class_ids = list(class_ids)
         self.class_ids = class_ids
 
-        # Buffer 4040
+        #* Buffer 4040
         self.buffer_ids = list(range(1, 46))
 
         if class_ids is not None and ids_list == None:
@@ -61,6 +61,7 @@ class CocoCache(CCD):
             if buffer_mode:
                 for b_idx in self.buffer_ids:
                     buffer_ids = self.coco.getImgIds(catIds=b_idx)
+                    buffer_size = int(len(buffer_ids) * buffer_rate)
                     self.ids.extend(buffer_ids[:buffer_size])
 
             self.ids = list(set(self.ids))

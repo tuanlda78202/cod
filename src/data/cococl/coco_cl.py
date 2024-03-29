@@ -29,7 +29,7 @@ class CocoDetectionCL(CocoCache):
         return_masks,
         cache_mode=False,
         img_ids=None,
-        class_ids=list(range(1, 46)),
+        class_ids=list(range(46, 91)),
         # class_ids=list(range(1, 91)),
         remap_mscoco_category=False,
     ):

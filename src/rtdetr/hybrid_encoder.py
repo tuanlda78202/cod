@@ -163,7 +163,7 @@ class TransformerEncoderLayer(nn.Module):
         return tensor if pos_embed is None else tensor + pos_embed
 
     def forward(
-        self, src, pre_attn=None, src_mask=None, pos_embed=None
+        self, src, src_mask=None, pos_embed=None
     ) -> torch.Tensor:
         residual = src
         if self.normalize_before:
@@ -195,11 +195,11 @@ class TransformerEncoder(nn.Module):
         self.norm = norm
 
     def forward(
-        self, src, src_mask=None, pos_embed=None, pre_attn=None
+        self, src, src_mask=None, pos_embed=None
     ) -> torch.Tensor:
         output = src
         for layer in self.layers:
-            output = layer(output, pre_attn, src_mask=src_mask, pos_embed=pos_embed)
+            output = layer(output, src_mask=src_mask, pos_embed=pos_embed)
 
         if self.norm is not None:
             output = self.norm(output)
@@ -333,7 +333,7 @@ class HybridEncoder(nn.Module):
             [out_w.sin(), out_w.cos(), out_h.sin(), out_h.cos()], dim=1
         )[None, :, :]
 
-    def forward(self, feats, pre_attn=None):
+    def forward(self, feats):
         assert len(feats) == len(self.in_channels)
         proj_feats = [self.input_proj[i](feat) for i, feat in enumerate(feats)]
 
@@ -352,7 +352,7 @@ class HybridEncoder(nn.Module):
                         src_flatten.device
                     )
 
-                memory = self.encoder[i](src_flatten, pre_attn, pos_embed=pos_embed)
+                memory = self.encoder[i](src_flatten, pos_embed=pos_embed)
                 proj_feats[enc_ind] = (
                     memory.permute(0, 2, 1)
                     .reshape(-1, self.hidden_dim, h, w)

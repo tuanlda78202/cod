@@ -40,29 +40,29 @@ def load_model_params(model: model, ckpt_path: str = None):
     return model
 
 
-def compute_attn(teacher_model, samples, targets, device, ex_device):
+def compute_attn(model, samples, targets, device, ex_device):
     with torch.no_grad():
-        teacher_model.to(device)
+        model.to(device)
 
-        teacher_encoder_outputs = []
+        model_encoder_outputs = []
         hook = (
-            teacher_model.encoder.encoder[-1]
+            model.encoder.encoder[-1]
             .layers[-1]
             .self_attn.register_forward_hook(
-                lambda module, input, output: teacher_encoder_outputs.append(output)
+                lambda module, input, output: model_encoder_outputs.append(output)
             )
         )
 
-        # Run teacher model to trigger forward hooks
-        _ = teacher_model(samples, targets)
+        _ = model(samples, targets)
         hook.remove()
+        
+        model.to(ex_device)
 
-        teacher_model.to(ex_device)
-    return teacher_encoder_outputs[0]
+    return model_encoder_outputs[0][-1]
 
 
 def fake_query(
-    outputs, targets, topk=10, current_classes=list(range(80, 91)), threshold=0.3
+    outputs, targets, current_classes, topk=30, threshold=0.3
 ):
     out_logits, out_bbox = outputs["pred_logits"], outputs["pred_boxes"]
 
@@ -102,7 +102,6 @@ def fake_query(
             )
     return targets
 
-
 def train_one_epoch(
     model: torch.nn.Module,
     criterion: torch.nn.Module,
@@ -111,8 +110,10 @@ def train_one_epoch(
     device: torch.device,
     epoch: int,
     max_norm: float = 0,
-    pseudo_label: bool = False,
-    distill_attn: bool = False,
+    pseudo_label: bool = True,
+    distill_attn: bool = True,
+    teacher_path: str = "../detrw/4040_f40_10e_ap585.pth",
+    current_classes=list(range(46, 91)),
     **kwargs,
 ):
     model.train()
@@ -128,11 +129,12 @@ def train_one_epoch(
 
     if pseudo_label or distill_attn:
         device, ex_device = torch.device("cuda"), torch.device("cpu")
-        model_copy = copy.deepcopy(model)
+        teacher_copy = copy.deepcopy(model)
+        student_copy = copy.deepcopy(model)
 
-        teacher_model = load_model_params(model_copy, "configs/rtdetr/7010_f70_2e.pth")
+        teacher_model = load_model_params(teacher_copy, teacher_path)
         teacher_model.eval()
-
+    
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
@@ -141,12 +143,22 @@ def train_one_epoch(
             teacher_attn = compute_attn(
                 teacher_model, samples, targets, device, ex_device
             )
-
+            
+            student_attn = compute_attn(
+                student_copy, samples, targets, device, ex_device
+            )
+            
+            location_loss = torch.nn.functional.mse_loss(
+                student_attn, teacher_attn
+            )
+            
+            del teacher_attn, student_attn
+        
         if pseudo_label:
             teacher_model.to(device)
             teacher_outputs = teacher_model(samples, targets)
-            targets = fake_query(teacher_outputs, targets)
-
+            targets = fake_query(teacher_outputs, targets, current_classes)
+        
         if scaler is not None:
             with torch.autocast(device_type=str(device), cache_enabled=True):
                 outputs = model(samples, targets)
@@ -164,15 +176,16 @@ def train_one_epoch(
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad()
-
+        
         else:
-            if distill_attn and pseudo_label:
-                outputs = model(samples, targets, teacher_attn)
-            else:
-                outputs = model(samples, targets)
+            outputs = model(samples, targets)
             loss_dict = criterion(outputs, targets)
 
             loss = sum(loss_dict.values())
+            
+            if distill_attn:
+                loss = loss + location_loss * 0.5
+                
             optimizer.zero_grad()
             loss.backward()
 
@@ -180,7 +193,7 @@ def train_one_epoch(
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
             optimizer.step()
-
+            
         # ema
         if ema is not None:
             ema.update(model)
