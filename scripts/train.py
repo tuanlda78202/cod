@@ -8,11 +8,24 @@ import src.misc.dist as dist
 from src.core import YAMLConfig
 from src.solver import TASKS
 
+import wandb
+import torch
+import numpy as np
+
+
+def set_seed_and_config():
+    np.random.seed(42)
+    torch.manual_seed(42)
+    torch.backends.cuda.matmul.allow_tf32 = True
+    torch.backends.cudnn.benchmark = True
+    torch.backends.cudnn.deterministic = False
+
 
 def main(
     args,
 ) -> None:
     """main"""
+    set_seed_and_config()
     dist.init_distributed()
 
     assert not all(
@@ -23,7 +36,12 @@ def main(
         args.config, resume=args.resume, use_amp=args.amp, tuning=args.tuning
     )
 
-    solver = TASKS[cfg.yaml_cfg["task"]](cfg)
+    wandb_mode = True
+    if wandb_mode:
+        wandb.init(
+            project="cod", entity="tuanlda78202", name="4040_l40_2e_fq_disattn_buffer10"
+        )
+        solver = TASKS[cfg.yaml_cfg["task"]](cfg)
 
     if args.test_only:
         solver.val()

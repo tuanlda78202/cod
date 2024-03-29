@@ -12,6 +12,7 @@ from termcolor import colored
 from pyexpat import model
 
 import copy
+import wandb
 
 
 def load_model_params(model: model, ckpt_path: str = None):
@@ -55,15 +56,13 @@ def compute_attn(model, samples, targets, device, ex_device):
 
         _ = model(samples, targets)
         hook.remove()
-        
+
         model.to(ex_device)
 
     return model_encoder_outputs[0][-1]
 
 
-def fake_query(
-    outputs, targets, current_classes, topk=30, threshold=0.3
-):
+def fake_query(outputs, targets, current_classes, topk=30, threshold=0.3):
     out_logits, out_bbox = outputs["pred_logits"], outputs["pred_boxes"]
 
     prob = out_logits.sigmoid()
@@ -102,6 +101,7 @@ def fake_query(
             )
     return targets
 
+
 def train_one_epoch(
     model: torch.nn.Module,
     criterion: torch.nn.Module,
@@ -134,7 +134,7 @@ def train_one_epoch(
 
         teacher_model = load_model_params(teacher_copy, teacher_path)
         teacher_model.eval()
-    
+
     for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
@@ -143,22 +143,20 @@ def train_one_epoch(
             teacher_attn = compute_attn(
                 teacher_model, samples, targets, device, ex_device
             )
-            
+
             student_attn = compute_attn(
                 student_copy, samples, targets, device, ex_device
             )
-            
-            location_loss = torch.nn.functional.mse_loss(
-                student_attn, teacher_attn
-            )
-            
+
+            location_loss = torch.nn.functional.mse_loss(student_attn, teacher_attn)
+
             del teacher_attn, student_attn
-        
+
         if pseudo_label:
             teacher_model.to(device)
             teacher_outputs = teacher_model(samples, targets)
             targets = fake_query(teacher_outputs, targets, current_classes)
-        
+
         if scaler is not None:
             with torch.autocast(device_type=str(device), cache_enabled=True):
                 outputs = model(samples, targets)
@@ -176,16 +174,16 @@ def train_one_epoch(
             scaler.step(optimizer)
             scaler.update()
             optimizer.zero_grad()
-        
+
         else:
             outputs = model(samples, targets)
             loss_dict = criterion(outputs, targets)
 
             loss = sum(loss_dict.values())
-            
+
             if distill_attn:
                 loss = loss + location_loss * 0.5
-                
+
             optimizer.zero_grad()
             loss.backward()
 
@@ -193,8 +191,7 @@ def train_one_epoch(
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
             optimizer.step()
-            
-        # ema
+
         if ema is not None:
             ema.update(model)
 
@@ -209,7 +206,15 @@ def train_one_epoch(
         metric_logger.update(loss=loss_value, **loss_dict_reduced)
         metric_logger.update(lr=optimizer.param_groups[0]["lr"])
 
-    # gather the stats from all processes
+        wandb.log(
+            {
+                "Total Loss": loss_value,
+                "Loss VFL": loss_dict_reduced["loss_vfl"],
+                "Loss GIoU": loss_dict_reduced["loss_giou"],
+                "Loss BBox": loss_dict_reduced["loss_bbox"],
+            }
+        )
+
     metric_logger.synchronize_between_processes()
     print("Averaged stats:", metric_logger)
     return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
@@ -229,10 +234,8 @@ def evaluate(
     criterion.eval()
 
     metric_logger = MetricLogger(delimiter="  ")
-    # metric_logger.add_meter('class_error', SmoothedValue(window_size=1, fmt='{value:.2f}'))
     header = "Test:"
 
-    # iou_types = tuple(k for k in ('segm', 'bbox') if k in postprocessors.keys())
     iou_types = postprocessors.iou_types
     coco_evaluator = CocoEvaluator(base_ds, iou_types)
     # coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
@@ -256,23 +259,32 @@ def evaluate(
 
     # gather the stats from all processes
     metric_logger.synchronize_between_processes()
-    print("Averaged stats:", metric_logger)
+
     if coco_evaluator is not None:
         coco_evaluator.synchronize_between_processes()
     if panoptic_evaluator is not None:
         panoptic_evaluator.synchronize_between_processes()
 
-    # accumulate predictions from all images
     if coco_evaluator is not None:
         coco_evaluator.accumulate()
         coco_evaluator.summarize()
 
     stats = {}
-    # stats = {k: meter.global_avg for k, meter in metric_logger.meters.items()}
+
     if coco_evaluator is not None:
         if "bbox" in iou_types:
             stats["coco_eval_bbox"] = coco_evaluator.coco_eval["bbox"].stats.tolist()
         if "segm" in iou_types:
             stats["coco_eval_masks"] = coco_evaluator.coco_eval["segm"].stats.tolist()
 
+    wandb.log(
+        {
+            "AP@0.5:0.95": stats["coco_eval_bbox"][0] * 100,
+            "AP@0.5": stats["coco_eval_bbox"][1] * 100,
+            "AP@0.75": stats["coco_eval_bbox"][2] * 100,
+            "AP@0.5:0.95 Small": stats["coco_eval_bbox"][3] * 100,
+            "AP@0.5:0.95 Medium": stats["coco_eval_bbox"][4] * 100,
+            "AP@0.5:0.95 Large": stats["coco_eval_bbox"][5] * 100,
+        }
+    )
     return stats, coco_evaluator

@@ -134,6 +134,7 @@ def reduce_dict(input_dict, average=True) -> Dict[str, torch.Tensor]:
     input_dict, after reduction.
     """
     world_size = get_world_size()
+
     if world_size < 2:
         return input_dict
     with torch.no_grad():
