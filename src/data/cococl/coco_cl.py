@@ -27,11 +27,14 @@ class CocoDetectionCL(CocoCache):
         ann_file,
         transforms,
         return_masks,
-        cache_mode=False,
-        img_ids=None,
-        class_ids=list(range(46, 91)),
-        # class_ids=list(range(1, 91)),
         remap_mscoco_category=False,
+        img_ids=None,
+        # * CL change here
+        class_ids=list(range(46, 91)),
+        buffer_mode=True,
+        buffer_ids=list(range(1, 46)),
+        buffer_rate=0.1,
+        cache_mode=False,
     ):
         super(CocoDetectionCL, self).__init__(
             img_folder,
@@ -39,6 +42,9 @@ class CocoDetectionCL(CocoCache):
             cache_mode=cache_mode,
             ids_list=img_ids,
             class_ids=class_ids,
+            buffer_ids=buffer_ids,
+            buffer_rate=buffer_rate,
+            buffer_mode=buffer_mode,
         )
 
         cats = {}

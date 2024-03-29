@@ -13,6 +13,7 @@ from pyexpat import model
 
 import copy
 import wandb
+from tqdm import tqdm
 
 
 def load_model_params(model: model, ckpt_path: str = None):
@@ -62,7 +63,7 @@ def compute_attn(model, samples, targets, device, ex_device):
     return model_encoder_outputs[0][-1]
 
 
-def fake_query(outputs, targets, current_classes, topk=30, threshold=0.3):
+def fake_query(outputs, targets, class_ids, topk=30, threshold=0.3):
     out_logits, out_bbox = outputs["pred_logits"], outputs["pred_boxes"]
 
     prob = out_logits.sigmoid()
@@ -78,7 +79,7 @@ def fake_query(outputs, targets, current_classes, topk=30, threshold=0.3):
         {"scores": s, "labels": l, "boxes": b} for s, l, b in zip(scores, labels, boxes)
     ]
 
-    min_current_classes = min(current_classes)
+    min_current_classes = min(class_ids)
 
     for idx, (target, result) in enumerate(zip(targets, results)):
         if target["labels"][target["labels"] < min_current_classes].shape[0] > 0:
@@ -110,19 +111,15 @@ def train_one_epoch(
     device: torch.device,
     epoch: int,
     max_norm: float = 0,
+    # * CL change here
     pseudo_label: bool = True,
     distill_attn: bool = True,
     teacher_path: str = "../detrw/4040_f40_10e_ap585.pth",
-    current_classes=list(range(46, 91)),
+    class_ids=list(range(46, 91)),
     **kwargs,
 ):
     model.train()
     criterion.train()
-
-    metric_logger = MetricLogger(delimiter="  ")
-    metric_logger.add_meter("lr", SmoothedValue(window_size=1, fmt="{value:.6f}"))
-    header = "Epoch: [{}]".format(epoch)
-    print_freq = kwargs.get("print_freq", 10)
 
     ema = kwargs.get("ema", None)
     scaler = kwargs.get("scaler", None)
@@ -135,7 +132,14 @@ def train_one_epoch(
         teacher_model = load_model_params(teacher_copy, teacher_path)
         teacher_model.eval()
 
-    for samples, targets in metric_logger.log_every(data_loader, print_freq, header):
+    tqdm_batch = tqdm(
+        iterable=data_loader,
+        desc="🚀 Epoch {}".format(epoch),
+        total=len(data_loader),
+        unit="it",
+    )
+
+    for batch_idx, (samples, targets) in enumerate(tqdm_batch):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
@@ -155,7 +159,7 @@ def train_one_epoch(
         if pseudo_label:
             teacher_model.to(device)
             teacher_outputs = teacher_model(samples, targets)
-            targets = fake_query(teacher_outputs, targets, current_classes)
+            targets = fake_query(teacher_outputs, targets, class_ids)
 
         if scaler is not None:
             with torch.autocast(device_type=str(device), cache_enabled=True):
@@ -198,13 +202,9 @@ def train_one_epoch(
         loss_dict_reduced = reduce_dict(loss_dict)
         loss_value = sum(loss_dict_reduced.values())
 
-        if not math.isfinite(loss_value):
-            print("Loss is {}, stopping training".format(loss_value))
-            print(loss_dict_reduced)
-            sys.exit(1)
-
-        metric_logger.update(loss=loss_value, **loss_dict_reduced)
-        metric_logger.update(lr=optimizer.param_groups[0]["lr"])
+        tqdm_batch.set_postfix(
+            total_loss=loss_value.item(),
+        )
 
         wandb.log(
             {
@@ -215,10 +215,6 @@ def train_one_epoch(
             }
         )
 
-    metric_logger.synchronize_between_processes()
-    print("Averaged stats:", metric_logger)
-    return {k: meter.global_avg for k, meter in metric_logger.meters.items()}
-
 
 @torch.no_grad()
 def evaluate(
@@ -228,21 +224,21 @@ def evaluate(
     data_loader,
     base_ds,
     device,
-    output_dir,
 ):
     model.eval()
     criterion.eval()
 
-    metric_logger = MetricLogger(delimiter="  ")
-    header = "Test:"
-
     iou_types = postprocessors.iou_types
     coco_evaluator = CocoEvaluator(base_ds, iou_types)
-    # coco_evaluator.coco_eval[iou_types[0]].params.iouThrs = [0, 0.1, 0.5, 0.75]
 
-    panoptic_evaluator = None
+    valid_tqdm_batch = tqdm(
+        iterable=data_loader,
+        desc="🏆 Valid ",
+        total=len(data_loader),
+        unit="it",
+    )
 
-    for samples, targets in metric_logger.log_every(data_loader, 100, header):
+    for batch_idx, (samples, targets) in enumerate(valid_tqdm_batch):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         outputs = model(samples)
@@ -254,28 +250,17 @@ def evaluate(
             target["image_id"].item(): output
             for target, output in zip(targets, results)
         }
-        if coco_evaluator is not None:
-            coco_evaluator.update(res)
+        coco_evaluator.update(res)
 
     # gather the stats from all processes
-    metric_logger.synchronize_between_processes()
-
-    if coco_evaluator is not None:
-        coco_evaluator.synchronize_between_processes()
-    if panoptic_evaluator is not None:
-        panoptic_evaluator.synchronize_between_processes()
-
-    if coco_evaluator is not None:
-        coco_evaluator.accumulate()
-        coco_evaluator.summarize()
+    coco_evaluator.synchronize_between_processes()
+    coco_evaluator.accumulate()
+    coco_evaluator.summarize()
 
     stats = {}
 
-    if coco_evaluator is not None:
-        if "bbox" in iou_types:
-            stats["coco_eval_bbox"] = coco_evaluator.coco_eval["bbox"].stats.tolist()
-        if "segm" in iou_types:
-            stats["coco_eval_masks"] = coco_evaluator.coco_eval["segm"].stats.tolist()
+    if "bbox" in iou_types:
+        stats["coco_eval_bbox"] = coco_evaluator.coco_eval["bbox"].stats.tolist()
 
     wandb.log(
         {
@@ -287,4 +272,3 @@ def evaluate(
             "AP@0.5:0.95 Large": stats["coco_eval_bbox"][5] * 100,
         }
     )
-    return stats, coco_evaluator

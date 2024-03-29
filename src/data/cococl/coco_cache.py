@@ -35,8 +35,8 @@ class CocoCache(CCD):
         ids_list=None,
         class_ids=None,
         buffer_ids=None,
-        buffer_rate=0.1,
-        buffer_mode=True,
+        buffer_rate=None,
+        buffer_mode=None,
     ):
         super(CocoCache, self).__init__(root, transforms, transform, target_transform)
         from pycocotools.coco import COCO
@@ -49,8 +49,7 @@ class CocoCache(CCD):
             class_ids = list(class_ids)
         self.class_ids = class_ids
 
-        #* Buffer 4040
-        self.buffer_ids = list(range(1, 46))
+        self.buffer_ids = buffer_ids
 
         if class_ids is not None and ids_list == None:
             self.ids = []
