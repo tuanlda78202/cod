@@ -7,6 +7,7 @@ from collections import OrderedDict
 from .common import get_activation, ConvNormLayer, FrozenBatchNorm2d
 
 from src.core import register
+from termcolor import colored
 
 
 __all__ = ["PResNet"]
@@ -219,7 +220,13 @@ class PResNet(nn.Module):
         if pretrained:
             state = torch.hub.load_state_dict_from_url(donwload_url[depth])
             self.load_state_dict(state)
-            print(f"Load PResNet{depth} state_dict")
+            print(
+                colored(
+                    f"Load PResNet{depth} state_dict",
+                    "blue",
+                    "on_yellow",
+                )
+            )
 
     def _freeze_parameters(self, m: nn.Module):
         for p in m.parameters():

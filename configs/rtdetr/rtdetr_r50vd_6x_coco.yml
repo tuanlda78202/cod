@@ -6,4 +6,4 @@ __include__: [
   './include/rtdetr_r50vd.yml',
 ]
 
-output_dir: ./output
+output_dir: ./outputs/weights/

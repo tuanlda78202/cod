@@ -7,6 +7,7 @@ from typing import Dict
 
 from src.misc import dist
 from src.core import BaseConfig
+from termcolor import colored
 
 
 class BaseSolver(object):
@@ -31,7 +32,13 @@ class BaseSolver(object):
 
         # NOTE (lvwenyu): should load_tuning_state before ema instance building
         if self.cfg.tuning:
-            print(f"Tuning checkpoint from {self.cfg.tuning}")
+            print(
+                colored(
+                    f"Tuning checkpoint from {self.cfg.tuning}",
+                    "blue",
+                    "on_yellow",
+                )
+            )
             self.load_tuning_state(self.cfg.tuning)
 
         self.scaler = cfg.scaler
@@ -49,7 +56,13 @@ class BaseSolver(object):
 
         # NOTE instantiating order
         if self.cfg.resume:
-            print(f"Resume checkpoint from {self.cfg.resume}")
+            print(
+                colored(
+                    f"Resume checkpoint from {self.cfg.resume}",
+                    "blue",
+                    "on_yellow",
+                )
+            )
             self.resume(self.cfg.resume)
 
         self.train_dataloader = dist.warp_loader(

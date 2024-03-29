@@ -8,7 +8,7 @@ import os
 import os.path
 import tqdm
 from io import BytesIO
-from termcolor import colored
+from termcolor import colored, cprint
 
 
 class CocoCache(CCD):
@@ -49,8 +49,6 @@ class CocoCache(CCD):
             class_ids = list(class_ids)
         self.class_ids = class_ids
 
-        self.buffer_ids = buffer_ids
-
         if class_ids is not None and ids_list == None:
             self.ids = []
             for c_idx in self.class_ids:
@@ -58,10 +56,19 @@ class CocoCache(CCD):
                 self.ids.extend(img_ids)
 
             if buffer_mode:
+                total_buffer = 0
+                self.buffer_ids = buffer_ids
+
                 for b_idx in self.buffer_ids:
                     buffer_ids = self.coco.getImgIds(catIds=b_idx)
                     buffer_size = int(len(buffer_ids) * buffer_rate)
+                    total_buffer += buffer_size
                     self.ids.extend(buffer_ids[:buffer_size])
+                cprint(
+                    f"Buffer Images: {total_buffer}\n{len(self.buffer_ids)} Buffer Classes: {self.buffer_ids}\n---------------------------------",
+                    "green",
+                    "on_red",
+                )
 
             self.ids = list(set(self.ids))
 
@@ -71,11 +78,10 @@ class CocoCache(CCD):
             self.cache = {}
             self.cache_images()
 
-        print(
-            colored(
-                f"Total Images: {len(self.ids)}\n{len(self.class_ids)} Classes: {self.class_ids}",
-                "green",
-            )
+        cprint(
+            f"Total Images: {len(self.ids)}\n{len(self.class_ids)} Task Classes: {self.class_ids}",
+            "red",
+            "on_cyan",
         )
 
     def cache_images(self):

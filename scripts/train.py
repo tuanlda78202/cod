@@ -4,6 +4,9 @@ import sys
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import argparse
 
+os.makedirs("./outputs", exist_ok=True)
+os.environ["WANDB_DIR"] = "./outputs"
+
 import src.misc.dist as dist
 from src.core import YAMLConfig
 from src.solver import TASKS
@@ -36,12 +39,10 @@ def main(
         args.config, resume=args.resume, use_amp=args.amp, tuning=args.tuning
     )
 
-    wandb_mode = True
-    if wandb_mode:
-        wandb.init(
-            project="cod", entity="tuanlda78202", name="4040_l40_2e_fq_disattn_buffer10"
-        )
-        solver = TASKS[cfg.yaml_cfg["task"]](cfg)
+    wandb.init(
+        project="cod", entity="tuanlda78202", name="4040_l40_pf40_fq_disattn_buffer10"
+    )
+    solver = TASKS[cfg.yaml_cfg["task"]](cfg)
 
     if args.test_only:
         solver.val()
