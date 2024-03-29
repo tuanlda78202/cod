@@ -9,6 +9,96 @@
   
 # Get Started
 
+<details>
+<summary>Folder Structure</summary>
+├── CODEOWNERS
+├── configs
+│   ├── cl
+│   │   ├── cl_dataset.yml
+│   │   └── cl_pipeline.yml
+│   ├── dataset
+│   │   └── coco_detection.yml
+│   ├── rtdetr
+│   │   ├── include
+│   │   │   ├── dataloader.yml
+│   │   │   ├── optimizer.yml
+│   │   │   └── rtdetr_r50vd.yml
+│   │   └── rtdetr_r50vd_6x_coco.yml
+│   └── runtime.yml
+├── LICENSE
+├── README.md
+├── requirements.txt
+├── scripts
+│   └── train.py
+└── src
+    ├── core
+    │   ├── config.py
+    │   ├── __init__.py
+    │   ├── yaml_config.py
+    │   └── yaml_utils.py
+    ├── data
+    │   ├── cococl
+    │   │   ├── augmentation.py
+    │   │   ├── buffer.py
+    │   │   ├── cl.py
+    │   │   ├── cl_utils.py
+    │   │   ├── coco_cache.py
+    │   │   ├── coco_cl.py
+    │   │   ├── coco_eval.py
+    │   │   ├── coco_utils.py
+    │   │   ├── custom_coco_eval.py
+    │   │   └── __init__.py
+    │   ├── dataloader.py
+    │   ├── functional.py
+    │   ├── __init__.py
+    │   └── transforms.py
+    ├── __init__.py
+    ├── misc
+    │   ├── dist.py
+    │   ├── __init__.py
+    │   ├── logger.py
+    │   └── visualizer.py
+    ├── nn
+    │   ├── arch
+    │   │   ├── classification.py
+    │   │   └── __init__.py
+    │   ├── backbone
+    │   │   ├── common.py
+    │   │   ├── __init__.py
+    │   │   ├── presnet.py
+    │   │   ├── test_resnet.py
+    │   │   └── utils.py
+    │   ├── criterion
+    │   │   ├── __init__.py
+    │   │   └── utils.py
+    │   └── __init__.py
+    ├── optim
+    │   ├── amp.py
+    │   ├── ema.py
+    │   ├── __init__.py
+    │   └── optim.py
+    ├── rtdetr
+    │   ├── box_ops.py
+    │   ├── denoising.py
+    │   ├── hybrid_encoder.py
+    │   ├── __init__.py
+    │   ├── matcher.py
+    │   ├── rtdetr_criterion.py
+    │   ├── rtdetr_decoder.py
+    │   ├── rtdetr_postprocessor.py
+    │   ├── rtdetr.py
+    │   └── utils.py
+    └── solver
+        ├── det_engine.py
+        ├── det_solver.py
+        ├── __init__.py
+        ├── rehearsal.py
+        └── solver.py
+
+</details>
+
+
+
 ## Installation 
 1. Clone the repository
 ```bash
@@ -64,6 +154,11 @@ python scripts/train.py -r /path/to/ckpt/training --test-only
    3. Set `True` for `fake_query` and `distill_attn`
    4. Training with same normal training script
    5. If you want evaluate, change `class_ids` to full classes
+
+Note: Clean cache WandB
+```bash
+ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9
+```
 
 # Contributors 
 <a href="https://github.com/tuanlda78202/MLR/graphs/contributors">

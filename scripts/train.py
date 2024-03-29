@@ -57,7 +57,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--config",
         "-c",
-        default="configs/rtdetr/rtdetr_r50vd_6x_coco.yml",
+        default="configs/rtdetr/rtdetr_r50vd_coco.yml",
         type=str,
     )
     parser.add_argument(

@@ -15,7 +15,7 @@ class YAMLConfig(BaseConfig):
         cfg = load_config(cfg_path)
         merge_dict(cfg, kwargs)
 
-        # print(cfg)
+        print(cfg)
 
         self.yaml_cfg = cfg
 

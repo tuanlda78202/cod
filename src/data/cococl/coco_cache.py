@@ -65,10 +65,11 @@ class CocoCache(CCD):
                     total_buffer += buffer_size
                     self.ids.extend(buffer_ids[:buffer_size])
                 cprint(
-                    f"Buffer Images: {total_buffer}\n{len(self.buffer_ids)} Buffer Classes: {self.buffer_ids}\n---------------------------------",
+                    f"Buffer Images: {total_buffer}\n{len(self.buffer_ids)} Buffer Classes: {self.buffer_ids}",
                     "green",
                     "on_red",
                 )
+                print("---------------------------------")
 
             self.ids = list(set(self.ids))
 
