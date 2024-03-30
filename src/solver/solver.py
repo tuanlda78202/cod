@@ -31,7 +31,7 @@ class BaseSolver(object):
         if self.cfg.tuning:
             print(
                 colored(
-                    f"Tuning checkpoint from {self.cfg.tuning}",
+                    f"Tuning checkpoint from [{self.cfg.tuning}]",
                     "blue",
                     "on_yellow",
                 )

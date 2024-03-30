@@ -1,0 +1,16 @@
+# CL General
+start_task: 0
+total_tasks: 2
+
+# CL Strategy
+pseudo_label: True
+distill_attn: True
+teacher_path: "../detrw/4040/4040_t0_e10_ap5853.pth"
+
+# CL Rehearsal
+
+# CL Eval
+fpp: True
+
+# WandB
+wandb_name: "4040_t1_10e_fq_disattn_buffer0.1"

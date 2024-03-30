@@ -19,10 +19,7 @@ class DetSolver(BaseSolver):
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
         task_idx = self.train_dataloader.dataset.task_idx
 
-        cprint(f"Task {task_idx}", "red", "on_yellow")
-
-        for task_idx in range(args.start_task, args.total_tasks):
-            a = 1
+        cprint(f"Task {task_idx} training...", "red", "on_yellow")
 
         for epoch in range(self.last_epoch + 1, args.epochs):
             if dist.is_dist_available_and_initialized():
@@ -39,7 +36,7 @@ class DetSolver(BaseSolver):
                 ema=self.ema,
                 scaler=self.scaler,
                 task_idx=task_idx,
-                data_ratio=args.data_ratio,
+                data_ratio=self.train_dataloader.dataset.data_ratio,
                 pseudo_label=args.pseudo_label,
                 distill_attn=args.distill_attn,
                 teacher_path=args.teacher_path,
@@ -62,7 +59,7 @@ class DetSolver(BaseSolver):
                 if (epoch + 1) % args.checkpoint_step == 0:
                     checkpoint_path = (
                         self.output_dir
-                        / f"{args.data_ratio}_task{task_idx}_{epoch}e_ap{ap:0.2}.pth"
+                        / f"{args.data_ratio}_t{task_idx}_e{epoch+1}_ap{round(ap, 2) * 100}.pth"
                     )
                     dist.save_on_master(self.state_dict(epoch), checkpoint_path)
 

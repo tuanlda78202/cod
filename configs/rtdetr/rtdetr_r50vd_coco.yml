@@ -4,8 +4,7 @@ __include__: [
   './include/dataloader.yml',
   './include/optimizer.yml',
   './include/rtdetr_r50vd.yml',
-  '../cl/cl_dataset.yml',
-  '../cl/cl_pipeline.yml'
+  '../cl_pipeline.yml'
 ]
 
 output_dir: ./outputs/weights/

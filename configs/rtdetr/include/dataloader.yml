@@ -1,24 +1,23 @@
-train_dataloader: 
-
-  dataset: 
+train_dataloader:
+  dataset:
     return_masks: False
 
     transforms:
       ops:
-        - {type: RandomPhotometricDistort, p: 0.5}
-        - {type: RandomZoomOut, fill: 0}
-        - {type: RandomIoUCrop, p: 0.8}
-        - {type: SanitizeBoundingBox, min_size: 1}
-        - {type: RandomHorizontalFlip}
-        - {type: Resize, size: [640, 640], }
-        - {type: ToImageTensor}
-        - {type: ConvertDtype}
-        - {type: SanitizeBoundingBox, min_size: 1}
-        - {type: ConvertBox, out_fmt: 'cxcywh', normalize: True}
+        - { type: RandomPhotometricDistort, p: 0.5 }
+        - { type: RandomZoomOut, fill: 0 }
+        - { type: RandomIoUCrop, p: 0.8 }
+        - { type: SanitizeBoundingBox, min_size: 1 }
+        - { type: RandomHorizontalFlip }
+        - { type: Resize, size: [640, 640] }
+        - { type: ToImageTensor }
+        - { type: ConvertDtype }
+        - { type: SanitizeBoundingBox, min_size: 1 }
+        - { type: ConvertBox, out_fmt: "cxcywh", normalize: True }
 
-    task_idx: 0
+    # CL change here
     data_ratio: "4040"
-
+    task_idx: 1
     buffer_mode: True
     buffer_rate: 0.1
 
@@ -28,19 +27,17 @@ train_dataloader:
   collate_fn: default_collate_fn
   drop_last: True
 
-
 val_dataloader:
-
-  dataset: 
+  dataset:
     transforms:
-      ops: 
-        - {type: Resize, size: [640, 640]}
-        - {type: ToImageTensor}
-        - {type: ConvertDtype}
-    
-    task_idx: 0
-    data_ratio: "4040"
+      ops:
+        - { type: Resize, size: [640, 640] }
+        - { type: ToImageTensor }
+        - { type: ConvertDtype }
 
+    # CL change here
+    data_ratio: "80"
+    task_idx: 1
     buffer_mode: False
 
   shuffle: False

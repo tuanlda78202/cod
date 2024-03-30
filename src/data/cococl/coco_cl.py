@@ -37,6 +37,7 @@ class CocoDetectionCL(CocoCache):
         img_ids=None,
     ):
         self.task_idx = task_idx
+        self.data_ratio = data_ratio
         divided_classes = data_setting(data_ratio)
         class_ids_current = divided_classes[self.task_idx]
         buffer_ids = list(set(list(range(1, 91))) - set(class_ids_current))

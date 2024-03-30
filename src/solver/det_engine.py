@@ -32,7 +32,9 @@ def load_model_params(model: model, ckpt_path: str = None):
     model.load_state_dict(new_model_dict)
 
     print(
-        colored(f"Teacher Model loading complete from {ckpt_path}", "blue", "on_yellow")
+        colored(
+            f"Teacher Model loading complete from [{ckpt_path}]", "blue", "on_yellow"
+        )
     )
 
     for _, params in model.named_parameters():

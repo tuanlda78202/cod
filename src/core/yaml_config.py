@@ -31,9 +31,6 @@ class YAMLConfig(BaseConfig):
         self.find_unused_parameters = cfg.get("find_unused_parameters", None)
         self.clip_max_norm = cfg.get("clip_max_norm", 0.0)
 
-        # *  CL Data
-        self.data_ratio = cfg.get("data_ratio", None)
-
         # *  CL General
         self.start_task = cfg.get("start_task", None)
         self.total_tasks = cfg.get("total_tasks", None)
@@ -53,16 +50,16 @@ class YAMLConfig(BaseConfig):
         self.config_info = copy.deepcopy(self.yaml_cfg)
 
         # * CL Rehearsal
-        # self.rehearsal: bool = False
-        # self.construct_replay: bool = False
-        # self.sampling_strategy: str = None
-        # self.sampling_mode: str = None
-        # self.least_sample: int = None
-        # self.limit_sample: int = None
+        self.rehearsal: bool = False
+        self.construct_replay: bool = False
+        self.sampling_strategy: str = None
+        self.sampling_mode: str = None
+        self.least_sample: int = None
+        self.limit_sample: int = None
 
-        # self.augment_replay: bool = False
-        # self.mix_replay: bool = False
-        # self.mosaic: bool = False
+        self.augment_replay: bool = False
+        self.mix_replay: bool = False
+        self.mosaic: bool = False
 
     @property
     def model(
@@ -114,9 +111,7 @@ class YAMLConfig(BaseConfig):
         return self._lr_scheduler
 
     @property
-    def train_dataloader(
-        self,
-    ):
+    def train_dataloader(self, task_idx: int = 1):
         if self._train_dataloader is None and "train_dataloader" in self.yaml_cfg:
             merge_config(self.yaml_cfg)
             self._train_dataloader = create("train_dataloader")

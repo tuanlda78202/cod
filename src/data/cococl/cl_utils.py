@@ -39,7 +39,7 @@ def data_setting(ratio: str, random_setting: bool = False):
         ],
         "4010101010": divided_classes,
         "7010": [flatten_list(divided_classes[:-1]), divided_classes[-1]],
-        "8000": [flatten_list(divided_classes), []],
+        "80": [total_classes, total_classes],
         "1010": [list(range(1, 11)), list(range(11, 22))],
         "20": [list(range(1, 22))],
     }

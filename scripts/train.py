@@ -52,6 +52,8 @@ def main(
     else:
         solver.fit()
 
+    wandb.finish()
+
 
 if __name__ == "__main__":
 
