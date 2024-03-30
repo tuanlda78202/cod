@@ -1,18 +1,15 @@
 import torch
-import torch.nn as nn
-
 from datetime import datetime
 from pathlib import Path
 from typing import Dict
+from termcolor import colored
 
 from src.misc import dist
 from src.core import BaseConfig
-from termcolor import colored
 
 
 class BaseSolver(object):
     def __init__(self, cfg: BaseConfig) -> None:
-
         self.cfg = cfg
 
     def setup(

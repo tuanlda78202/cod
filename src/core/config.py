@@ -66,35 +66,6 @@ class BaseConfig(object):
         device = "cuda" if torch.cuda.is_available() else "cpu"
         self.device = torch.device(device)
 
-        # * WandB
-        self.wandb: bool = False
-
-        # * CL General
-        self.start_task: int = None
-        self.total_tasks: int = None
-        self.epoch_per_task: int = None
-        self.divide_ratio: str = None
-
-        # * CL Rehearsal
-        self.rehearsal: bool = False
-        self.construct_replay: bool = False
-        self.sampling_strategy: str = None
-        self.sampling_mode: str = None
-        self.least_sample: int = None
-        self.limit_sample: int = None
-
-        self.augment_replay: bool = False
-        self.mix_replay: bool = False
-        self.mosaic: bool = False
-
-        # * CL Strategy
-        self.fake_query: bool = False
-        self.distill_model: bool = False
-        self.teacher_model: str = None
-
-        # * CL Eval
-        self.fpp: bool = False
-
     @property
     def model(
         self,

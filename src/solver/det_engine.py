@@ -1,14 +1,13 @@
-import math
-import sys
 from typing import Iterable
 
 import torch
 import torch.amp
 
 from src.data import CocoEvaluator
-from src.misc import MetricLogger, SmoothedValue, reduce_dict
+from src.misc import reduce_dict
+from src.data.cococl import data_setting
 
-from termcolor import colored
+from termcolor import colored, cprint
 from pyexpat import model
 
 import copy
@@ -111,11 +110,11 @@ def train_one_epoch(
     device: torch.device,
     epoch: int,
     max_norm: float = 0,
-    # * CL change here
-    pseudo_label: bool = True,
-    distill_attn: bool = True,
-    teacher_path: str = "../detrw/4040_f40_10e_ap585.pth",
-    class_ids=list(range(46, 91)),
+    task_idx: int = None,
+    data_ratio: str = None,
+    pseudo_label: bool = None,
+    distill_attn: bool = None,
+    teacher_path: str = None,
     **kwargs,
 ):
     model.train()
@@ -123,6 +122,11 @@ def train_one_epoch(
 
     ema = kwargs.get("ema", None)
     scaler = kwargs.get("scaler", None)
+    divided_classes = data_setting(data_ratio)
+
+    if task_idx == 0:
+        pseudo_label, distill_attn = False, False
+        cprint("Normal Training...", "on_yellow")
 
     if pseudo_label or distill_attn:
         device, ex_device = torch.device("cuda"), torch.device("cpu")
@@ -159,7 +163,7 @@ def train_one_epoch(
         if pseudo_label:
             teacher_model.to(device)
             teacher_outputs = teacher_model(samples, targets)
-            targets = fake_query(teacher_outputs, targets, class_ids)
+            targets = fake_query(teacher_outputs, targets, divided_classes[task_idx])
 
         if scaler is not None:
             with torch.autocast(device_type=str(device), cache_enabled=True):
@@ -272,3 +276,5 @@ def evaluate(
             "AP@0.5:0.95 Large": stats["coco_eval_bbox"][5] * 100,
         }
     )
+
+    return stats["coco_eval_bbox"][0] * 100

@@ -12,6 +12,7 @@ from pycocotools import mask as coco_mask
 from src.core import register
 
 from .coco_cache import CocoCache
+from .cl_utils import data_setting
 
 __all__ = ["CocoDetectionCL"]
 
@@ -27,28 +28,32 @@ class CocoDetectionCL(CocoCache):
         ann_file,
         transforms,
         return_masks,
+        cache_mode,
+        task_idx,
+        data_ratio,
+        buffer_mode,
+        buffer_rate,
         remap_mscoco_category=False,
         img_ids=None,
-        # * CL change here
-        class_ids=list(range(46, 91)),
-        buffer_mode=True,
-        buffer_ids=list(range(1, 46)),
-        buffer_rate=0.1,
-        cache_mode=False,
     ):
-        super(CocoDetectionCL, self).__init__(
+        self.task_idx = task_idx
+        divided_classes = data_setting(data_ratio)
+        class_ids_current = divided_classes[self.task_idx]
+        buffer_ids = list(set(list(range(1, 91))) - set(class_ids_current))
+
+        super().__init__(
             img_folder,
             ann_file,
+            class_ids=class_ids_current,
+            buffer_ids=buffer_ids,
             cache_mode=cache_mode,
             ids_list=img_ids,
-            class_ids=class_ids,
-            buffer_ids=buffer_ids,
             buffer_rate=buffer_rate,
             buffer_mode=buffer_mode,
         )
 
         cats = {}
-        for class_id in class_ids:
+        for class_id in class_ids_current:
             try:
                 cats[class_id] = self.coco.cats[class_id]
             except KeyError:

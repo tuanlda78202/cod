@@ -14,6 +14,13 @@ train_dataloader:
         - {type: SanitizeBoundingBox, min_size: 1}
         - {type: ConvertBox, out_fmt: 'cxcywh', normalize: True}
 
+    task_idx: 0 ###
+    cache_mode: False
+    data_ratio: "4040"
+
+    buffer_mode: True
+    buffer_rate: 0.1
+
   shuffle: True
   batch_size: 12
   num_workers: 12
@@ -27,6 +34,14 @@ val_dataloader:
         - {type: Resize, size: [640, 640]}
         - {type: ToImageTensor}
         - {type: ConvertDtype}
+
+    task_idx: 0 #
+
+    cache_mode: False
+    data_ratio: "4040" ###
+
+    buffer_mode: False
+
   shuffle: False
   batch_size: 8
   num_workers: 12

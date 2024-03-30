@@ -27,7 +27,6 @@ def set_seed_and_config():
 def main(
     args,
 ) -> None:
-    """main"""
     set_seed_and_config()
     dist.init_distributed()
 
@@ -40,8 +39,12 @@ def main(
     )
 
     wandb.init(
-        project="cod", entity="tuanlda78202", name="4040_l40_pf40_fq_disattn_buffer10"
+        project=cfg.wandb_project,
+        entity=cfg.wandb_entity,
+        name=cfg.wandb_name,
+        config=cfg.config_info,
     )
+
     solver = TASKS[cfg.yaml_cfg["task"]](cfg)
 
     if args.test_only:

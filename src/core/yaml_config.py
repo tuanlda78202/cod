@@ -15,8 +15,6 @@ class YAMLConfig(BaseConfig):
         cfg = load_config(cfg_path)
         merge_dict(cfg, kwargs)
 
-        print(cfg)
-
         self.yaml_cfg = cfg
 
         self.log_step = cfg.get("log_step", 100)
@@ -32,6 +30,39 @@ class YAMLConfig(BaseConfig):
         self.autocast = cfg.get("autocast", dict())
         self.find_unused_parameters = cfg.get("find_unused_parameters", None)
         self.clip_max_norm = cfg.get("clip_max_norm", 0.0)
+
+        # *  CL Data
+        self.data_ratio = cfg.get("data_ratio", None)
+
+        # *  CL General
+        self.start_task = cfg.get("start_task", None)
+        self.total_tasks = cfg.get("total_tasks", None)
+
+        # * CL Strategy
+        self.pseudo_label = cfg.get("pseudo_label", None)
+        self.distill_attn = cfg.get("distill_attn", None)
+        self.teacher_path = cfg.get("teacher_path", None)
+
+        # * CL Eval
+        self.fpp: bool = False
+
+        # *  WandB
+        self.wandb_name = cfg.get("wandb_name", None)
+        self.wandb_project = cfg.get("wandb_project", "cod")
+        self.wandb_entity = cfg.get("wandb_entity", "tuanlda78202")
+        self.config_info = copy.deepcopy(self.yaml_cfg)
+
+        # * CL Rehearsal
+        # self.rehearsal: bool = False
+        # self.construct_replay: bool = False
+        # self.sampling_strategy: str = None
+        # self.sampling_mode: str = None
+        # self.least_sample: int = None
+        # self.limit_sample: int = None
+
+        # self.augment_replay: bool = False
+        # self.mix_replay: bool = False
+        # self.mosaic: bool = False
 
     @property
     def model(

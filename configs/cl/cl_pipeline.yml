@@ -1,0 +1,18 @@
+# WandB
+wandb_name: "4040_l40_pf40_fq_disattn_buffer10"
+
+# CL strategy
+pseudo_label: True
+distill_attn: True
+teacher_path: "../detrw/4040_f40_10e_ap585.pth"
+
+# Buffer
+buffer_mode: True
+buffer_rate: 0.1 
+
+# Mode 
+start_task: 0
+total_tasks: 2
+
+# Eval 
+fpp: True

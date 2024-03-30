@@ -52,5 +52,4 @@ def data_setting(ratio: str, random_setting: bool = False):
 
         divided_classes_detail = divide_classes_randomly(total_classes, ratios)
 
-    print(colored(f"Divided_Classes :{divided_classes_detail}", "blue", "on_yellow"))
     return divided_classes_detail

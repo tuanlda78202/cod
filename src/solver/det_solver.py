@@ -1,18 +1,10 @@
-"""
-by lyuwenyu
-"""
-
-import time
-import json
-import datetime
-
-import torch
-
 from src.misc import dist
 from src.data import get_coco_api_from_dataset
 
 from .solver import BaseSolver
 from .det_engine import train_one_epoch, evaluate
+
+from termcolor import cprint
 
 
 class DetSolver(BaseSolver):
@@ -24,18 +16,15 @@ class DetSolver(BaseSolver):
 
         args = self.cfg
 
-        n_parameters = sum(
-            p.numel() for p in self.model.parameters() if p.requires_grad
-        )
-        # print("Model parameters:", n_parameters)
-
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
-        # best_stat = {'coco_eval_bbox': 0, 'coco_eval_masks': 0, 'epoch': -1, }
-        best_stat = {
-            "epoch": -1,
-        }
+        task_idx = self.train_dataloader.dataset.task_idx
 
-        start_time = time.time()
+        cprint(f"Task {task_idx}", "red", "on_yellow")
+
+        for task_idx in range(args.start_task, args.total_tasks):
+            
+
+
         for epoch in range(self.last_epoch + 1, args.epochs):
             if dist.is_dist_available_and_initialized():
                 self.train_dataloader.sampler.set_epoch(epoch)
@@ -48,26 +37,20 @@ class DetSolver(BaseSolver):
                 self.device,
                 epoch,
                 args.clip_max_norm,
-                print_freq=args.log_step,
                 ema=self.ema,
                 scaler=self.scaler,
+                task_idx=task_idx,
+                data_ratio=args.data_ratio,
+                pseudo_label=args.pseudo_label,
+                distill_attn=args.distill_attn,
+                teacher_path=args.teacher_path,
             )
 
             self.lr_scheduler.step()
 
-            if self.output_dir:
-                checkpoint_paths = [self.output_dir / "checkpoint.pth"]
-                # extra checkpoint before LR drop and every 100 epochs
-                if (epoch + 1) % args.checkpoint_step == 0:
-                    checkpoint_paths.append(
-                        self.output_dir / f"checkpoint{epoch:04}.pth"
-                    )
-                for checkpoint_path in checkpoint_paths:
-                    dist.save_on_master(self.state_dict(epoch), checkpoint_path)
-
             module = self.ema.module if self.ema else self.model
 
-            evaluate(
+            ap = evaluate(
                 module,
                 self.criterion,
                 self.postprocessor,
@@ -76,10 +59,15 @@ class DetSolver(BaseSolver):
                 self.device,
             )
 
-        total_time = time.time() - start_time
-        total_time_str = str(datetime.timedelta(seconds=int(total_time)))
-        print("Training time {}".format(total_time_str))
+            if self.output_dir:
+                if (epoch + 1) % args.checkpoint_step == 0:
+                    checkpoint_path = (
+                        self.output_dir
+                        / f"{args.data_ratio}_task{task_idx}_{epoch}e_ap{ap:0.2}.pth"
+                    )
+                    dist.save_on_master(self.state_dict(epoch), checkpoint_path)
 
+    # If CL, evaluation on full all classes
     def val(
         self,
     ):
