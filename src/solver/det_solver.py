@@ -22,8 +22,7 @@ class DetSolver(BaseSolver):
         cprint(f"Task {task_idx}", "red", "on_yellow")
 
         for task_idx in range(args.start_task, args.total_tasks):
-            
-
+            a = 1
 
         for epoch in range(self.last_epoch + 1, args.epochs):
             if dist.is_dist_available_and_initialized():

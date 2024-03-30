@@ -1,6 +1,8 @@
 train_dataloader: 
+
   dataset: 
     return_masks: False
+
     transforms:
       ops:
         - {type: RandomPhotometricDistort, p: 0.5}
@@ -14,8 +16,7 @@ train_dataloader:
         - {type: SanitizeBoundingBox, min_size: 1}
         - {type: ConvertBox, out_fmt: 'cxcywh', normalize: True}
 
-    task_idx: 0 ###
-    cache_mode: False
+    task_idx: 0
     data_ratio: "4040"
 
     buffer_mode: True
@@ -25,20 +26,20 @@ train_dataloader:
   batch_size: 12
   num_workers: 12
   collate_fn: default_collate_fn
+  drop_last: True
 
 
 val_dataloader:
+
   dataset: 
     transforms:
       ops: 
         - {type: Resize, size: [640, 640]}
         - {type: ToImageTensor}
         - {type: ConvertDtype}
-
-    task_idx: 0 #
-
-    cache_mode: False
-    data_ratio: "4040" ###
+    
+    task_idx: 0
+    data_ratio: "4040"
 
     buffer_mode: False
 
@@ -46,3 +47,4 @@ val_dataloader:
   batch_size: 8
   num_workers: 12
   collate_fn: default_collate_fn
+  drop_last: False

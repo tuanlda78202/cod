@@ -146,6 +146,9 @@ def create(type_or_name, **kwargs):
 
     cls_kwargs = {n: cls_kwargs[n] for n in arg_names}
 
+    # if "task_idx" in arg_names:
+    #     cls_kwargs["task_idx"] = 1
+
     return cls(**cls_kwargs)
 
 

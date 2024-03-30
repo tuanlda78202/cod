@@ -170,13 +170,6 @@ class BaseConfig(object):
     def val_dataloader(self, loader):
         self._val_dataloader = loader
 
-    # TODO method
-    # @property
-    # def ema(self, ) -> nn.Module:
-    #     if self._ema is None and self.use_ema and self.model is not None:
-    #         self._ema = ModelEMA(self.model, self.ema_decay)
-    #     return self._ema
-
     @property
     def ema(
         self,
