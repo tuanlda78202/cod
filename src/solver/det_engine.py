@@ -129,7 +129,7 @@ def train_one_epoch(
 
     if task_idx == 0:
         pseudo_label, distill_attn = False, False
-        cprint("Normal Training...", "on_yellow")
+        cprint("Normal Training...", "black", "on_yellow")
 
     if pseudo_label or distill_attn:
         teacher_copy = copy.deepcopy(model)

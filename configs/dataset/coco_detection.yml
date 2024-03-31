@@ -3,9 +3,9 @@ task: detection
 num_classes: 80
 remap_mscoco_category: True
 
-train_dataloader: 
+train_dataloader:
   type: DataLoader
-  dataset: 
+  dataset:
     type: CocoDetectionCL
 
     img_folder: ../coco/train2017/
@@ -15,10 +15,9 @@ train_dataloader:
       type: Compose
       ops: ~
 
-
 val_dataloader:
   type: DataLoader
-  dataset: 
+  dataset:
     type: CocoDetectionCL
 
     img_folder: ../coco/val2017/
@@ -26,4 +25,4 @@ val_dataloader:
 
     transforms:
       type: Compose
-      ops: ~ 
+      ops: ~
