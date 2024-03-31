@@ -6,3 +6,9 @@
 
 # Source
 /src/ @tuanlda78202
+
+# Others
+.gitignore @tuanlda78202
+.gitattributes @tuanlda78202
+README.md @tuanlda78202
+requirements.txt @tuanlda78202

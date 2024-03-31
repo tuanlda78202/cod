@@ -51,9 +51,16 @@ class CocoCache(CCD):
 
         if class_ids is not None and ids_list == None:
             self.ids = []
+
             for c_idx in self.class_ids:
                 img_ids = self.coco.getImgIds(catIds=c_idx)
                 self.ids.extend(img_ids)
+
+            cprint(
+                f"Original Images: {len(set(self.ids))}",
+                "green",
+                "on_red",
+            )
 
             if buffer_mode:
                 total_buffer = 0
