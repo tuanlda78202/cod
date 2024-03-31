@@ -50,7 +50,7 @@ class YAMLConfig(BaseConfig):
         self.config_info = copy.deepcopy(self.yaml_cfg)
 
         # * CL Rehearsal
-        self.rehearsal: bool = False
+        self.rehearsal = cfg.get("rehearsal", False)
         self.construct_replay: bool = False
         self.sampling_strategy: str = None
         self.sampling_mode: str = None

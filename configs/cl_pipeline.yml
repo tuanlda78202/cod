@@ -8,6 +8,7 @@ distill_attn: True
 teacher_path: "../detrw/4040/4040_t0_e10_ap5853.pth"
 
 # CL Rehearsal
+rehearsal: False
 
 # CL Eval
 fpp: True

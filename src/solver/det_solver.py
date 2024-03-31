@@ -64,6 +64,22 @@ class DetSolver(BaseSolver):
                     )
                     dist.save_on_master(self.state_dict(epoch), checkpoint_path)
 
+        # # Generating Buffer with extra epoch
+        # last_task = task_idx + 1 == args.total_tasks
+        # if last_task == False and args.rehearsal:
+        #     print(f"Model update for generating buffer list")
+        #     self.rehearsal_classes = construct_replay_extra_epoch(
+        #         args=self.args,
+        #         Divided_Classes=self.Divided_Classes,
+        #         model=self.model,
+        #         criterion=self.criterion,
+        #         device=self.device,
+        #         rehearsal_classes=self.rehearsal_classes,
+        #         task_num=task_idx,
+        #     )
+        #     print(f"complete save and merge replay's buffer process")
+        #     print(f"next replay buffer list : {self.rehearsal_classes.keys()}")
+
     def val(
         self,
     ):
