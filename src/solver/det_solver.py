@@ -4,7 +4,6 @@ from src.data import get_coco_api_from_dataset
 from .solver import BaseSolver
 from .det_engine import train_one_epoch, evaluate
 
-import torch
 from termcolor import cprint
 
 class DetSolver(BaseSolver):
@@ -19,10 +18,6 @@ class DetSolver(BaseSolver):
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
         task_idx = self.train_dataloader.dataset.task_idx
         data_ratio = self.train_dataloader.dataset.data_ratio
-
-        # default, reduce-overhead, max-autotune
-        # device = torch.device("cuda")
-        # self.model = torch.compile(self.model.to(device), mode="default")
 
         cprint(f"Task {task_idx} training...", "red", "on_yellow")
 
@@ -64,7 +59,7 @@ class DetSolver(BaseSolver):
                 if (epoch + 1) % args.checkpoint_step == 0:
                     checkpoint_path = (
                         self.output_dir
-                        / f"{data_ratio}_t{task_idx}_{epoch+1}e_ap{round(ap, 2) * 100}.pth"
+                        / f"{data_ratio}_t{task_idx}_{epoch+1}e_ap{round(ap, 2)}.pth"
                     )
                     dist.save_on_master(self.state_dict(epoch), checkpoint_path)
 

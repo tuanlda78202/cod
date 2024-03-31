@@ -1,6 +1,7 @@
 import numpy as np
 import torch.nn as nn
 import torch.nn.functional as F
+from termcolor import cprint
 
 from src.core import register
 
@@ -25,6 +26,9 @@ class RTDETR(nn.Module):
         self.encoder = encoder
         self.multi_scale = multi_scale
         self.task_idx = task_idx
+        
+        if self.multi_scale and self.training and self.task_idx == 0:
+            cprint(f"Multi-scale first task training: {self.multi_scale}", "red")
 
     def forward(self, x, targets=None):
         if self.multi_scale and self.training and self.task_idx == 0:
