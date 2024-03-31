@@ -137,7 +137,7 @@ def reduce_dict(input_dict, average=True) -> Dict[str, torch.Tensor]:
 
     if world_size < 2:
         return input_dict
-    with torch.no_grad():
+    with torch.inference_mode():
         names = []
         values = []
         # sort the keys so that they are consistent across processes

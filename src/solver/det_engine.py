@@ -43,8 +43,8 @@ def load_model_params(model: model, ckpt_path: str = None):
     return model
 
 
-def compute_attn(model, samples, targets, device, ex_device):
-    with torch.no_grad():
+def compute_attn(model, samples, targets, device, ex_device=None):
+    with torch.inference_mode():
         model.to(device)
 
         model_encoder_outputs = []
@@ -59,7 +59,8 @@ def compute_attn(model, samples, targets, device, ex_device):
         _ = model(samples, targets)
         hook.remove()
 
-        model.to(ex_device)
+        if ex_device is not None:
+            model.to(ex_device)
 
     return model_encoder_outputs[0][-1]
 
@@ -131,10 +132,7 @@ def train_one_epoch(
         cprint("Normal Training...", "on_yellow")
 
     if pseudo_label or distill_attn:
-        device, ex_device = torch.device("cuda"), torch.device("cpu")
         teacher_copy = copy.deepcopy(model)
-        student_copy = copy.deepcopy(model)
-
         teacher_model = load_model_params(teacher_copy, teacher_path)
         teacher_model.eval()
 
@@ -150,20 +148,14 @@ def train_one_epoch(
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
         if distill_attn:
-            teacher_attn = compute_attn(
-                teacher_model, samples, targets, device, ex_device
-            )
-
-            student_attn = compute_attn(
-                student_copy, samples, targets, device, ex_device
-            )
+            teacher_attn = compute_attn(teacher_model, samples, targets, device)
+            student_attn = compute_attn(model, samples, targets, device)
 
             location_loss = torch.nn.functional.mse_loss(student_attn, teacher_attn)
 
             del teacher_attn, student_attn
 
         if pseudo_label:
-            teacher_model.to(device)
             teacher_outputs = teacher_model(samples, targets)
             targets = fake_query(teacher_outputs, targets, divided_classes[task_idx])
 
@@ -194,7 +186,7 @@ def train_one_epoch(
             if distill_attn:
                 loss = loss + location_loss * 0.5
 
-            optimizer.zero_grad()
+            optimizer.zero_grad(set_to_none=True)
             loss.backward()
 
             if max_norm > 0:
@@ -209,15 +201,14 @@ def train_one_epoch(
         loss_value = sum(loss_dict_reduced.values())
 
         tqdm_batch.set_postfix(
-            total_loss=loss_value.item(),
+            rtdetr_loss=loss_value.item(),
+            kd_loss=location_loss.item() if distill_attn else 0,
         )
 
         wandb.log(
             {
-                "Total Loss": loss_value,
-                "Loss VFL": loss_dict_reduced["loss_vfl"],
-                "Loss GIoU": loss_dict_reduced["loss_giou"],
-                "Loss BBox": loss_dict_reduced["loss_bbox"],
+                "RT-DETR Loss": loss_value,
+                "KD Loss": (location_loss.item() if distill_attn else 0),
             }
         )
 

@@ -18,6 +18,7 @@ class DetSolver(BaseSolver):
 
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
         task_idx = self.train_dataloader.dataset.task_idx
+        data_ratio = self.train_dataloader.dataset.data_ratio
 
         cprint(f"Task {task_idx} training...", "red", "on_yellow")
 
@@ -36,7 +37,7 @@ class DetSolver(BaseSolver):
                 ema=self.ema,
                 scaler=self.scaler,
                 task_idx=task_idx,
-                data_ratio=self.train_dataloader.dataset.data_ratio,
+                data_ratio=data_ratio,
                 pseudo_label=args.pseudo_label,
                 distill_attn=args.distill_attn,
                 teacher_path=args.teacher_path,
@@ -59,11 +60,10 @@ class DetSolver(BaseSolver):
                 if (epoch + 1) % args.checkpoint_step == 0:
                     checkpoint_path = (
                         self.output_dir
-                        / f"{args.data_ratio}_t{task_idx}_e{epoch+1}_ap{round(ap, 2) * 100}.pth"
+                        / f"{data_ratio}_t{task_idx}_e{epoch+1}_ap{round(ap, 2) * 100}.pth"
                     )
                     dist.save_on_master(self.state_dict(epoch), checkpoint_path)
 
-    # If CL, evaluation on full all classes
     def val(
         self,
     ):

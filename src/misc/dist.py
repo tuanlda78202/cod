@@ -149,7 +149,7 @@ def reduce_dict(data, avg=True):
     if world_size < 2:
         return data
 
-    with torch.no_grad():
+    with torch.inference_mode():
         keys, values = [], []
         for k in sorted(data.keys()):
             keys.append(k)

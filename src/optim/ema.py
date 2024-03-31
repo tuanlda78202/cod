@@ -52,7 +52,7 @@ class ModelEMA(object):
 
     def update(self, model: nn.Module):
         # Update EMA parameters
-        with torch.no_grad():
+        with torch.inference_mode():
             self.updates += 1
             d = self.decay_fn(self.updates)
 
