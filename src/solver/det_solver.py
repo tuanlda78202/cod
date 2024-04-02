@@ -6,6 +6,7 @@ from .det_engine import train_one_epoch, evaluate
 
 from termcolor import cprint
 
+
 class DetSolver(BaseSolver):
 
     def fit(
@@ -46,6 +47,13 @@ class DetSolver(BaseSolver):
 
             module = self.ema.module if self.ema else self.model
 
+            if self.output_dir:
+                if (epoch + 1) % args.checkpoint_step == 0:
+                    checkpoint_path = (
+                        self.output_dir / f"{data_ratio}_t{task_idx}_{epoch+1}e.pth"
+                    )
+                    dist.save_on_master(self.state_dict(epoch), checkpoint_path)
+
             ap = evaluate(
                 module,
                 self.criterion,
@@ -54,14 +62,6 @@ class DetSolver(BaseSolver):
                 base_ds,
                 self.device,
             )
-
-            if self.output_dir:
-                if (epoch + 1) % args.checkpoint_step == 0:
-                    checkpoint_path = (
-                        self.output_dir
-                        / f"{data_ratio}_t{task_idx}_{epoch+1}e_ap{round(ap, 2)}.pth"
-                    )
-                    dist.save_on_master(self.state_dict(epoch), checkpoint_path)
 
         # # Generating Buffer with extra epoch
         # last_task = task_idx + 1 == args.total_tasks

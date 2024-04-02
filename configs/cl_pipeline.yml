@@ -3,9 +3,9 @@ start_task: 0
 total_tasks: 2
 
 # CL Strategy
-pseudo_label: False
-distill_attn: False
-teacher_path: "../detrw/4040/4040_t0_e10_ap5853.pth"
+pseudo_label: True
+distill_attn: True
+teacher_path: "../detrw/7010/7010_t0_10e_ap5474.pth"
 
 # CL Rehearsal
 rehearsal: False
@@ -14,4 +14,4 @@ rehearsal: False
 fpp: False
 
 # WandB
-wandb_name: "7010_t0_10e"
+wandb_name: "7010_t1_10e_fq_disattn640_bf10"
