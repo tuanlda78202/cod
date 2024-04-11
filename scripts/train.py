@@ -43,6 +43,7 @@ def main(
         entity=cfg.wandb_entity,
         name=cfg.wandb_name,
         config=cfg.config_info,
+        mode=cfg.wandb_mode,
     )
 
     solver = TASKS[cfg.yaml_cfg["task"]](cfg)

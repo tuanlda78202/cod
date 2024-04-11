@@ -1,17 +1,17 @@
-# CL General
-start_task: 0
-total_tasks: 2
+# WandB
+wandb_mode: "disabled"
+wandb_name: "7010_t1_10e_fq_disattn640_bf10"
 
 # CL Strategy
 pseudo_label: True
 distill_attn: True
 teacher_path: "../detrw/7010/7010_t0_10e_ap5474.pth"
+# CL General
+# start_task: 0
+# total_tasks: 2
 
 # CL Rehearsal
-rehearsal: False
+# rehearsal: False
 
 # CL Eval
-fpp: False
-
-# WandB
-wandb_name: "7010_t1_10e_fq_disattn640_bf10"
+# fpp: False
