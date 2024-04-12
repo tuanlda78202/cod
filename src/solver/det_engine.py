@@ -200,7 +200,7 @@ def train_one_epoch(
             loss = sum(loss_dict.values())
 
             if distill_attn:
-                loss = loss + location_loss * 20
+                loss = loss + location_loss * 2
 
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
@@ -253,7 +253,7 @@ def evaluate(
         unit="it",
     )
 
-    for batch_idx, (samples, targets) in enumerate(valid_tqdm_batch):
+    for batch_idx, (samples, targets, img_feats) in enumerate(valid_tqdm_batch):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         outputs = model(samples)

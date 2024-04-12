@@ -1,6 +1,6 @@
 # WandB
-wandb_mode: "disabled"
-wandb_name: "7010_t1_10e_fq_disattn640_bf10"
+wandb_mode: "online"
+wandb_name: "7010_t1_10e"
 
 # CL Strategy
 pseudo_label: True
