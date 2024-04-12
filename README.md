@@ -106,7 +106,7 @@ git clone https://github.com/tuanlda78202/cod.git cod && cd cod
 ```
 2. Install the required packages:
 ```
-pip install -r requirements.txt
+pip install -q -r requirements.txt
 ```
 <!-- pipreqs for get requirements.txt -->
 

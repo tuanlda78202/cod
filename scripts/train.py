@@ -7,6 +7,10 @@ import argparse
 os.makedirs("./outputs", exist_ok=True)
 os.environ["WANDB_DIR"] = "./outputs"
 
+import warnings
+
+warnings.filterwarnings("ignore")
+
 import src.misc.dist as dist
 from src.core import YAMLConfig
 from src.solver import TASKS
@@ -74,7 +78,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--tuning",
         "-t",
-        default="",
+        default="../detrw/7010/7010_t0_10e_ap5474.pth",
         type=str,
     )
     parser.add_argument(

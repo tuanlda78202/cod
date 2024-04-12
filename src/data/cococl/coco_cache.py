@@ -8,7 +8,7 @@ import os
 import os.path
 import tqdm
 from io import BytesIO
-from termcolor import colored, cprint
+from termcolor import cprint
 
 
 class CocoCache(CCD):
@@ -118,11 +118,8 @@ class CocoCache(CCD):
         """
         coco = self.coco
         img_id = self.ids[index]
-        # TODO : 기존에는 모든 존재하는 이미지 ID를 가져와서 사용하던 것을 변환 -> 미리 선언한 Class에 해당하는 이미지들만 선별
 
-        if (
-            self.class_ids is not None
-        ):  # 클래스 IDS에 해당하는 Target만 가져오는 것이 핵심
+        if self.class_ids is not None:
             target = [
                 value
                 for value in coco.loadAnns(coco.getAnnIds(img_id))

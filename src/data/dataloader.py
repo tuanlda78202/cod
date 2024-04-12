@@ -23,4 +23,8 @@ class DataLoader(data.DataLoader):
 @register
 def default_collate_fn(items):
     """default collate_fn"""
-    return torch.cat([x[0][None] for x in items], dim=0), [x[1] for x in items]
+    return (
+        torch.cat([x[0][None] for x in items], dim=0),
+        [x[1] for x in items],
+        torch.cat([x[2][None] for x in items], dim=0),
+    )

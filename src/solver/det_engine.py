@@ -143,7 +143,7 @@ def train_one_epoch(
         unit="it",
     )
 
-    for batch_idx, (samples, targets) in enumerate(tqdm_batch):
+    for _, (samples, targets, img_feats) in enumerate(tqdm_batch):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
