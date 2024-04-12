@@ -43,8 +43,27 @@ def load_model_params(model: model, ckpt_path: str = None):
     return model
 
 
-def compute_attn(model, samples, targets, device, ex_device=None):
-    with torch.inference_mode():
+def compute_attn(model, samples, targets, device, ex_device=None, mode="teacher"):
+    if mode == "teacher":
+        with torch.no_grad():
+            model.to(device)
+
+            model_encoder_outputs = []
+            hook = (
+                model.encoder.encoder[-1]
+                .layers[-1]
+                .self_attn.register_forward_hook(
+                    lambda module, input, output: model_encoder_outputs.append(output)
+                )
+            )
+
+            _ = model(samples, targets)
+            hook.remove()
+
+            if ex_device is not None:
+                model.to(ex_device)
+
+    elif mode == "student":
         model.to(device)
 
         model_encoder_outputs = []
@@ -58,9 +77,6 @@ def compute_attn(model, samples, targets, device, ex_device=None):
 
         _ = model(samples, targets)
         hook.remove()
-
-        if ex_device is not None:
-            model.to(ex_device)
 
     return model_encoder_outputs[0][-1]
 
@@ -149,7 +165,7 @@ def train_one_epoch(
 
         if distill_attn:
             teacher_attn = compute_attn(teacher_model, samples, targets, device)
-            student_attn = compute_attn(model, samples, targets, device)
+            student_attn = compute_attn(model, samples, targets, device, mode="student")
 
             location_loss = torch.nn.functional.mse_loss(student_attn, teacher_attn)
 
@@ -184,7 +200,7 @@ def train_one_epoch(
             loss = sum(loss_dict.values())
 
             if distill_attn:
-                loss = loss + location_loss * 0.5
+                loss = loss + location_loss * 20
 
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
@@ -203,12 +219,14 @@ def train_one_epoch(
         tqdm_batch.set_postfix(
             rtdetr_loss=loss_value.item(),
             kd_loss=location_loss.item() if distill_attn else 0,
+            total_loss=loss.item() if distill_attn else 0,
         )
 
         wandb.log(
             {
                 "RT-DETR Loss": loss_value,
                 "KD Loss": (location_loss.item() if distill_attn else 0),
+                "Total Loss": (loss.item() if distill_attn else 0),
             }
         )
 

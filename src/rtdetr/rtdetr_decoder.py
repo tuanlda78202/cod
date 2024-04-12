@@ -393,9 +393,9 @@ class RTDETRTransformer(nn.Module):
         self.num_denoising = num_denoising
         self.label_noise_ratio = label_noise_ratio
         self.box_noise_scale = box_noise_scale
-        # denoising part
+
+        # denoising
         if num_denoising > 0:
-            # self.denoising_class_embed = nn.Embedding(num_classes, hidden_dim, padding_idx=num_classes-1) # TODO for load paddle weights
             self.denoising_class_embed = nn.Embedding(
                 num_classes + 1, hidden_dim, padding_idx=num_classes
             )
