@@ -1,10 +1,10 @@
 # WandB
-wandb_mode: "online"
-wandb_name: "7010_t1_10e"
+wandb_mode: "disabled"
+wandb_name: "4040_t0_prompt_10e"
 
 # CL Strategy
-pseudo_label: True
-distill_attn: True
+pseudo_label: False
+distill_attn: False
 teacher_path: "../detrw/7010/7010_t0_10e_ap5474.pth"
 # CL General
 # start_task: 0

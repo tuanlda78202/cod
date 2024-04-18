@@ -78,7 +78,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--tuning",
         "-t",
-        default="../detrw/7010/7010_t0_10e_ap5474.pth",
+        default="../detrw/rtdetr_r50_1xe_o365.pth",
         type=str,
     )
     parser.add_argument(
