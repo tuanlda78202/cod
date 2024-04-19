@@ -34,19 +34,17 @@ class PromptCOD(nn.Module):
         self.pool_size = pool_size
         self.p_length = p_length
 
-        # * Fix key ~ CLIP Label embeddings
         for e in self.p_layers:
             p = init_prompt(self.pool_size, self.p_length, emb_dim)
-            k = init_prompt(self.pool_size, self.key_dim)
             setattr(self, f"p_{e}", p)
-            setattr(self, f"k_{e}", k)
 
-    def forward(self, l, x_query, x_block):
+    def forward(self, l, x_block, x_query, key):
+        x_query = x_query.squeeze(1)
+
         if l in self.p_layers:
             B, C = x_query.shape
             p = getattr(self, f"p_{l}")
-            K = getattr(self, f"k_{l}")
-
+            K = key
             # cosine similarity to match keys/queries
             n_K = nn.functional.normalize(K, dim=1)
             q = nn.functional.normalize(x_query, dim=1).detach()
@@ -63,6 +61,8 @@ class PromptCOD(nn.Module):
             Pv = P_[:, :, i:, :].reshape((B, -1, self.emb_dim))
 
             p_return = [Pk, Pv]
+        else:
+            p_return = None
 
         return p_return, x_block
 

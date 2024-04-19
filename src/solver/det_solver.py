@@ -42,6 +42,7 @@ class DetSolver(BaseSolver):
                 pseudo_label=args.pseudo_label,
                 distill_attn=args.distill_attn,
                 teacher_path=args.teacher_path,
+                text_feat=text_feat,
             )
 
             self.lr_scheduler.step()
@@ -86,6 +87,7 @@ class DetSolver(BaseSolver):
         self.eval()
 
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
+        text_feat = self.val_dataloader.dataset.text_feat
 
         module = self.ema.module if self.ema else self.model
 
@@ -96,4 +98,5 @@ class DetSolver(BaseSolver):
             self.val_dataloader,
             base_ds,
             self.device,
+            text_feat=text_feat,
         )

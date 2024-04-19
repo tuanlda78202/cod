@@ -22,7 +22,7 @@ train_dataloader:
     buffer_rate: 0.1
 
   shuffle: True
-  batch_size: 8
+  batch_size: 48
   num_workers: 12
   collate_fn: default_collate_fn
   drop_last: True

@@ -134,10 +134,28 @@ def train_one_epoch(
     pseudo_label: bool = None,
     distill_attn: bool = None,
     teacher_path: str = None,
+    text_feat: torch.Tensor = None,
+    prompt_mode: bool = True,
     **kwargs,
 ):
     model.train()
     criterion.train()
+
+    if prompt_mode:
+        model.backbone.eval()
+        model.encoder.eval()
+
+        for param in model.backbone.parameters():
+            param.requires_grad = False
+        for param in model.encoder.parameters():
+            param.requires_grad = False
+
+        for name_p, p in model.decoder.named_parameters():
+            if "prompt" in name_p:
+                p.requires_grad = True
+                print(name_p)
+            else:
+                p.requires_grad = False
 
     ema = kwargs.get("ema", None)
     scaler = kwargs.get("scaler", None)
@@ -194,7 +212,7 @@ def train_one_epoch(
             optimizer.zero_grad()
 
         else:
-            outputs = model(samples, targets)
+            outputs = model(samples, targets, img_feats, text_feat)
             loss_dict = criterion(outputs, targets)
 
             loss = sum(loss_dict.values())
@@ -239,6 +257,7 @@ def evaluate(
     data_loader,
     base_ds,
     device,
+    text_feat: torch.Tensor = None,
 ):
     model.eval()
     criterion.eval()
@@ -256,7 +275,8 @@ def evaluate(
     for batch_idx, (samples, targets, img_feats) in enumerate(valid_tqdm_batch):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-        outputs = model(samples)
+
+        outputs = model(samples, image_query=img_feats, text_key=text_feat)
 
         orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
         results = postprocessors(outputs, orig_target_sizes)

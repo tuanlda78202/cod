@@ -218,13 +218,15 @@ class TransformerDecoderLayer(nn.Module):
         query_pos_embed=None,
         prompt=None,
     ):
-        # self attention
-        # q = k = self.with_pos_embed(tgt, query_pos_embed)
-        # tgt2, _ = self.self_attn(q, k, value=tgt, attn_mask=attn_mask)
-        # * Not Sure
-        tgt = self.prompt_attn(self.norm1(tgt), prompt=prompt)
-        tgt = tgt + self.dropout1(tgt2)
-        tgt = self.norm1(tgt)
+        if prompt is not None:
+            tgt2 = self.prompt_attn(self.norm1(tgt), prompt=prompt)
+            tgt = tgt + self.dropout1(tgt2)
+            tgt = self.norm1(tgt)
+        else:
+            q = k = self.with_pos_embed(tgt, query_pos_embed)
+            tgt2, _ = self.self_attn(q, k, value=tgt, attn_mask=attn_mask)
+            tgt = tgt + self.dropout1(tgt2)
+            tgt = self.norm1(tgt)
 
         # cross attention
         tgt2 = self.cross_attn(
@@ -268,15 +270,20 @@ class TransformerDecoder(nn.Module):
         attn_mask=None,
         memory_mask=None,
         prompt=None,
+        image_query=None,
+        text_key=None,
     ):
         output = tgt
         dec_out_bboxes = []
         dec_out_logits = []
         ref_points_detach = F.sigmoid(ref_points_unact)
 
-        for i, layer in enumerate(self.layers):
+        for idx, layer in enumerate(self.layers):
             ref_points_input = ref_points_detach.unsqueeze(2)
             query_pos_embed = query_pos_head(ref_points_detach)
+
+            if prompt is not None:
+                p_list, output = prompt.forward(idx, output, image_query, text_key)
 
             output = layer(
                 output,
@@ -287,24 +294,24 @@ class TransformerDecoder(nn.Module):
                 attn_mask,
                 memory_mask,
                 query_pos_embed,
-                prompt,
+                prompt=p_list,
             )
 
             inter_ref_bbox = F.sigmoid(
-                bbox_head[i](output) + inverse_sigmoid(ref_points_detach)
+                bbox_head[idx](output) + inverse_sigmoid(ref_points_detach)
             )
 
             if self.training:
-                dec_out_logits.append(score_head[i](output))
-                if i == 0:
+                dec_out_logits.append(score_head[idx](output))
+                if idx == 0:
                     dec_out_bboxes.append(inter_ref_bbox)
                 else:
                     dec_out_bboxes.append(
-                        F.sigmoid(bbox_head[i](output) + inverse_sigmoid(ref_points))
+                        F.sigmoid(bbox_head[idx](output) + inverse_sigmoid(ref_points))
                     )
 
-            elif i == self.eval_idx:
-                dec_out_logits.append(score_head[i](output))
+            elif idx == self.eval_idx:
+                dec_out_logits.append(score_head[idx](output))
                 dec_out_bboxes.append(inter_ref_bbox)
                 break
 
@@ -626,7 +633,7 @@ class RTDETRTransformer(nn.Module):
 
         return target, reference_points_unact.detach(), enc_topk_bboxes, enc_topk_logits
 
-    def forward(self, feats, targets=None):
+    def forward(self, feats, targets=None, image_query=None, text_key=None):
 
         # input projection and embedding
         (memory, spatial_shapes, level_start_index) = self._get_encoder_input(feats)
@@ -670,6 +677,8 @@ class RTDETRTransformer(nn.Module):
             self.query_pos_head,
             attn_mask=attn_mask,
             prompt=self.prompt,
+            image_query=image_query,
+            text_key=text_key,
         )
 
         if self.training and dn_meta is not None:
