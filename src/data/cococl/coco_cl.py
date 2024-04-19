@@ -8,7 +8,11 @@ torchvision.disable_beta_transforms_warning()
 from torchvision import datapoints
 
 from pycocotools import mask as coco_mask
-from transformers import AutoProcessor, CLIPModel
+from transformers import AutoProcessor, AutoTokenizer, CLIPModel
+
+import os
+
+os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from src.core import register
 
@@ -74,11 +78,21 @@ class CocoDetectionCL(CocoCache):
         self.clip_processor = AutoProcessor.from_pretrained(
             "openai/clip-vit-base-patch16"
         )
+        tokenizer = AutoTokenizer.from_pretrained("openai/clip-vit-base-patch16")
+
+        # CLIP Text
+        label_task_current = [
+            mscoco_category2name[cat]
+            for cat in class_ids_current
+            if cat in list(mscoco_category2name.keys())
+        ]
+        label_inputs = tokenizer(label_task_current, padding=True, return_tensors="pt")
+        self.text_feat = self.clip_model.get_text_features(**label_inputs)
 
     def __getitem__(self, idx):
         img, target = super(CocoDetectionCL, self).__getitem__(idx)
 
-        # CLIP
+        # CLIP Image
         clip_inputs = self.clip_processor(images=img, return_tensors="pt")
         img_feat = self.clip_model.get_image_features(**clip_inputs)
 

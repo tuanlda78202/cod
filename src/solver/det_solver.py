@@ -19,6 +19,7 @@ class DetSolver(BaseSolver):
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
         task_idx = self.train_dataloader.dataset.task_idx
         data_ratio = self.train_dataloader.dataset.data_ratio
+        text_feat = self.train_dataloader.dataset.text_feat
 
         cprint(f"Task {task_idx} training...", "red", "on_yellow")
 

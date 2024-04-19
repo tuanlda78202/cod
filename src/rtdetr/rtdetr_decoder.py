@@ -10,7 +10,7 @@ import torch.nn.init as init
 from .denoising import get_contrastive_denoising_training_group
 from .utils import deformable_attention_core_func, get_activation, inverse_sigmoid
 from .utils import bias_init_with_prob
-
+from .prompt import PromptCOD, PromptAttention
 
 from src.core import register
 
@@ -177,33 +177,28 @@ class TransformerDecoderLayer(nn.Module):
     ):
         super(TransformerDecoderLayer, self).__init__()
 
-        # self attention
+        # Self Attention
         self.self_attn = nn.MultiheadAttention(
             d_model, n_head, dropout=dropout, batch_first=True
         )
         self.dropout1 = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
 
-        # cross attention
+        # Prompt Attention
+        self.prompt_attn = PromptAttention(d_model, n_head, attn_drop=dropout)
+
+        # Cross Attention
         self.cross_attn = MSDeformableAttention(d_model, n_head, n_levels, n_points)
         self.dropout2 = nn.Dropout(dropout)
         self.norm2 = nn.LayerNorm(d_model)
 
-        # ffn
+        # FFN
         self.linear1 = nn.Linear(d_model, dim_feedforward)
         self.activation = getattr(F, activation)
         self.dropout3 = nn.Dropout(dropout)
         self.linear2 = nn.Linear(dim_feedforward, d_model)
         self.dropout4 = nn.Dropout(dropout)
         self.norm3 = nn.LayerNorm(d_model)
-
-        # self._reset_parameters()
-
-    # def _reset_parameters(self):
-    #     linear_init_(self.linear1)
-    #     linear_init_(self.linear2)
-    #     xavier_uniform_(self.linear1.weight)
-    #     xavier_uniform_(self.linear2.weight)
 
     def with_pos_embed(self, tensor, pos):
         return tensor if pos is None else tensor + pos
@@ -221,17 +216,13 @@ class TransformerDecoderLayer(nn.Module):
         attn_mask=None,
         memory_mask=None,
         query_pos_embed=None,
+        prompt=None,
     ):
         # self attention
-        q = k = self.with_pos_embed(tgt, query_pos_embed)
-
-        # if attn_mask is not None:
-        #     attn_mask = torch.where(
-        #         attn_mask.to(torch.bool),
-        #         torch.zeros_like(attn_mask),
-        #         torch.full_like(attn_mask, float('-inf'), dtype=tgt.dtype))
-
-        tgt2, _ = self.self_attn(q, k, value=tgt, attn_mask=attn_mask)
+        # q = k = self.with_pos_embed(tgt, query_pos_embed)
+        # tgt2, _ = self.self_attn(q, k, value=tgt, attn_mask=attn_mask)
+        # * Not Sure
+        tgt = self.prompt_attn(self.norm1(tgt), prompt=prompt)
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)
 
@@ -276,6 +267,7 @@ class TransformerDecoder(nn.Module):
         query_pos_head,
         attn_mask=None,
         memory_mask=None,
+        prompt=None,
     ):
         output = tgt
         dec_out_bboxes = []
@@ -295,6 +287,7 @@ class TransformerDecoder(nn.Module):
                 attn_mask,
                 memory_mask,
                 query_pos_embed,
+                prompt,
             )
 
             inter_ref_bbox = F.sigmoid(
@@ -393,6 +386,16 @@ class RTDETRTransformer(nn.Module):
         self.num_denoising = num_denoising
         self.label_noise_ratio = label_noise_ratio
         self.box_noise_scale = box_noise_scale
+
+        # prompt
+        self.prompt = PromptCOD(
+            emb_dim=hidden_dim,
+            key_dim=hidden_dim,
+            pool_size=40,
+            p_length=20,
+            p_layers=[0, 1],
+            top_k=1,
+        )
 
         # denoising
         if num_denoising > 0:
@@ -666,6 +669,7 @@ class RTDETRTransformer(nn.Module):
             self.dec_score_head,
             self.query_pos_head,
             attn_mask=attn_mask,
+            prompt=self.prompt,
         )
 
         if self.training and dn_meta is not None:
