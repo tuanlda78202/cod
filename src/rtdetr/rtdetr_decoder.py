@@ -218,8 +218,9 @@ class TransformerDecoderLayer(nn.Module):
         query_pos_embed=None,
         prompt=None,
     ):
+        print(tgt.shape, prompt[0].shape)
         if prompt is not None:
-            tgt2 = self.prompt_attn(self.norm1(tgt), prompt=prompt)
+            tgt2 = self.prompt_attn(tgt, prompt=prompt)
             tgt = tgt + self.dropout1(tgt2)
             tgt = self.norm1(tgt)
         else:
@@ -395,14 +396,7 @@ class RTDETRTransformer(nn.Module):
         self.box_noise_scale = box_noise_scale
 
         # prompt
-        self.prompt = PromptCOD(
-            emb_dim=hidden_dim,
-            key_dim=hidden_dim,
-            pool_size=40,
-            p_length=20,
-            p_layers=[0, 1],
-            top_k=1,
-        )
+        self.prompt = PromptCOD()
 
         # denoising
         if num_denoising > 0:

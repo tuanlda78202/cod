@@ -13,6 +13,7 @@ from pyexpat import model
 import copy
 import wandb
 from tqdm import tqdm
+import gc
 
 
 def load_model_params(model: model, ckpt_path: str = None):
@@ -142,18 +143,13 @@ def train_one_epoch(
     criterion.train()
 
     if prompt_mode:
-        model.backbone.eval()
-        model.encoder.eval()
-
         for param in model.backbone.parameters():
             param.requires_grad = False
         for param in model.encoder.parameters():
             param.requires_grad = False
-
         for name_p, p in model.decoder.named_parameters():
             if "prompt" in name_p:
                 p.requires_grad = True
-                print(name_p)
             else:
                 p.requires_grad = False
 
@@ -179,6 +175,7 @@ def train_one_epoch(
 
     for _, (samples, targets, img_feats) in enumerate(tqdm_batch):
         samples = samples.to(device)
+
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
         if distill_attn:
@@ -213,6 +210,7 @@ def train_one_epoch(
 
         else:
             outputs = model(samples, targets, img_feats, text_feat)
+
             loss_dict = criterion(outputs, targets)
 
             loss = sum(loss_dict.values())
@@ -227,6 +225,8 @@ def train_one_epoch(
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
             optimizer.step()
+
+            gc.collect()
 
         if ema is not None:
             ema.update(model)

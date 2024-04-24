@@ -35,25 +35,16 @@ class RTDETR(nn.Module):
         self.multi_scale = multi_scale
         self.task_idx = task_idx
 
-        # if self.multi_scale and self.training and self.task_idx == 0:
-        #     cprint(f"Multi-scale first task training: {self.multi_scale}", "red")
+        if self.multi_scale and self.training and self.task_idx == 0:
+            cprint(f"Multi-scale first task training: {self.multi_scale}", "red")
 
     def forward(self, x, targets=None, image_query=None, text_key=None):
-        # if self.multi_scale and self.training and self.task_idx == 0:
-        #     sz = np.random.choice(self.multi_scale)
-        #     x = F.interpolate(x, size=[sz, sz])
+        if self.multi_scale and self.training and self.task_idx == 0:
+            sz = np.random.choice(self.multi_scale)
+            x = F.interpolate(x, size=[sz, sz])
 
         x = self.backbone(x)
         x = self.encoder(x)
         x = self.decoder(x, targets, image_query, text_key)
 
         return x
-
-    def deploy(
-        self,
-    ):
-        self.eval()
-        for m in self.modules():
-            if hasattr(m, "convert_to_deploy"):
-                m.convert_to_deploy()
-        return self

@@ -20,23 +20,22 @@ class PromptCOD(nn.Module):
         self,
         emb_dim=512,
         key_dim=512,
-        pool_size=40,
+        top_k=3,
+        pool_size=40,  # number of classes task-id
         p_length=20,
         p_layers=[0, 1],
-        top_k=1,
     ):
         super().__init__()
         self.emb_dim = emb_dim
         self.key_dim = key_dim
-
         self.top_k = top_k
         self.p_layers = p_layers
         self.pool_size = pool_size
         self.p_length = p_length
 
-        for e in self.p_layers:
+        for l in self.p_layers:
             p = init_prompt(self.pool_size, self.p_length, emb_dim)
-            setattr(self, f"p_{e}", p)
+            setattr(self, f"p_{l}", p)
 
     def forward(self, l, x_block, x_query, key):
         x_query = x_query.squeeze(1)
@@ -44,18 +43,15 @@ class PromptCOD(nn.Module):
         if l in self.p_layers:
             B, C = x_query.shape
             p = getattr(self, f"p_{l}")
-            K = key
-            # cosine similarity to match keys/queries
-            n_K = nn.functional.normalize(K, dim=1)
-            q = nn.functional.normalize(x_query, dim=1).detach()
-            cos_sim = torch.einsum("bj, kj->bk", q, n_K)
+            K_fix = key
 
-            # top-k
+            q = nn.functional.normalize(x_query, dim=1)
+            n_K = nn.functional.normalize(K_fix, dim=1)
+            cos_sim = torch.einsum("bj,kj->bk", q, n_K)
+
             top_k = torch.topk(cos_sim, self.top_k, dim=1)
-            k_idx = top_k.indices
-            P_ = p[k_idx]
+            P_ = p[top_k.indices]
 
-            # select prompts
             i = int(self.p_length / 2)
             Pk = P_[:, :, :i, :].reshape((B, -1, self.emb_dim))
             Pv = P_[:, :, i:, :].reshape((B, -1, self.emb_dim))
