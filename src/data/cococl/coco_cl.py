@@ -74,13 +74,13 @@ class CocoDetectionCL(CocoCache):
         self.remap_mscoco_category = remap_mscoco_category
 
         # CLIP
-        self.clip_model = CLIPModel.from_pretrained("openai/clip-vit-base-patch32")
+        self.clip_model = CLIPModel.from_pretrained(
+            "openai/clip-vit-base-patch32", low_cpu_mem_usage=True
+        )
         self.clip_processor = AutoProcessor.from_pretrained(
-            "openai/clip-vit-base-patch32"
+            "openai/clip-vit-base-patch32", low_cpu_mem_usage=True
         )
         tokenizer = AutoTokenizer.from_pretrained("openai/clip-vit-base-patch32")
-
-        # self.clip_device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
         # CLIP Text
         label_task_current = [
@@ -90,16 +90,14 @@ class CocoDetectionCL(CocoCache):
         ]
         label_inputs = tokenizer(label_task_current, padding=True, return_tensors="pt")
 
-        with torch.inference_mode():
-            self.text_feat = self.clip_model.get_text_features(**label_inputs)
+        self.text_feat = self.clip_model.get_text_features(**label_inputs)
 
     def __getitem__(self, idx):
         img, target = super(CocoDetectionCL, self).__getitem__(idx)
 
         # CLIP Image
         clip_inputs = self.clip_processor(images=img, return_tensors="pt")
-        with torch.inference_mode():
-            img_feat = self.clip_model.get_image_features(**clip_inputs)
+        img_feat = self.clip_model.get_image_features(**clip_inputs)
 
         image_id = self.ids[idx]
         target = {"image_id": image_id, "annotations": target}
@@ -119,7 +117,7 @@ class CocoDetectionCL(CocoCache):
         if self._transforms is not None:
             img, target = self._transforms(img, target)
 
-        return img, target, img_feat
+        return img, target, img_feat.clone().detach()
 
     def extra_repr(self) -> str:
         s = f" img_folder: {self.img_folder}\n ann_file: {self.ann_file}\n"

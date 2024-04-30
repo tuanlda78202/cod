@@ -22,27 +22,46 @@ class PromptCOD(nn.Module):
         key_dim=512,
         top_k=3,
         pool_size=40,  # number of classes task-id
-        p_length=20,
-        p_layers=[0, 1],
+        c_length=6,
+        g_length=6,
+        g_layers=[0, 1],
+        c_layers=[2, 3],
     ):
         super().__init__()
         self.emb_dim = emb_dim
         self.key_dim = key_dim
-        self.top_k = top_k
-        self.p_layers = p_layers
-        self.pool_size = pool_size
-        self.p_length = p_length
 
-        for l in self.p_layers:
-            p = init_prompt(self.pool_size, self.p_length, emb_dim)
-            setattr(self, f"p_{l}", p)
+        self.top_k = top_k
+        self.pool_size = pool_size
+
+        self.g_layers = g_layers
+        self.c_layers = c_layers
+        self.g_length = g_length
+        self.c_length = c_length
+
+        for l in self.g_layers:
+            p = init_prompt(self.g_length, emb_dim)
+            setattr(self, f"g_{l}", p)
+
+        for l in self.c_layers:
+            p = init_prompt(self.pool_size, self.c_length, emb_dim)
+            setattr(self, f"c_{l}", p)
 
     def forward(self, l, x_block, x_query, key):
         x_query = x_query.squeeze(1)
 
-        if l in self.p_layers:
+        if l in self.g_layers:
+            p = getattr(self, f"g_{l}")
+            P_ = p.expand(len(x_query), -1, -1)
+
+            j = int(self.g_length / 2)
+            Gk = P_[:, :j, :]
+            Gv = P_[:, j:, :]
+            p_return = [Gk, Gv]
+
+        if l in self.c_layers:
             B, C = x_query.shape
-            p = getattr(self, f"p_{l}")
+            p = getattr(self, f"c_{l}")
             K_fix = key
 
             q = nn.functional.normalize(x_query, dim=1)
@@ -52,11 +71,12 @@ class PromptCOD(nn.Module):
             top_k = torch.topk(cos_sim, self.top_k, dim=1)
             P_ = p[top_k.indices]
 
-            i = int(self.p_length / 2)
-            Pk = P_[:, :, :i, :].reshape((B, -1, self.emb_dim))
-            Pv = P_[:, :, i:, :].reshape((B, -1, self.emb_dim))
+            i = int(self.c_length / 2)
+            Ck = P_[:, :, :i, :].reshape((B, -1, self.emb_dim))
+            Cv = P_[:, :, i:, :].reshape((B, -1, self.emb_dim))
 
-            p_return = [Pk, Pv]
+            p_return = [Ck, Cv]
+
         else:
             p_return = None
 

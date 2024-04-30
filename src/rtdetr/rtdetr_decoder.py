@@ -218,7 +218,6 @@ class TransformerDecoderLayer(nn.Module):
         query_pos_embed=None,
         prompt=None,
     ):
-        print(tgt.shape, prompt[0].shape)
         if prompt is not None:
             tgt2 = self.prompt_attn(tgt, prompt=prompt)
             tgt = tgt + self.dropout1(tgt2)
@@ -257,7 +256,7 @@ class TransformerDecoder(nn.Module):
         self.hidden_dim = hidden_dim
         self.num_layers = num_layers
         self.eval_idx = eval_idx if eval_idx >= 0 else num_layers + eval_idx
-
+    
     def forward(
         self,
         tgt,
@@ -408,6 +407,7 @@ class RTDETRTransformer(nn.Module):
         self.learnt_init_query = learnt_init_query
         if learnt_init_query:
             self.tgt_embed = nn.Embedding(num_queries, hidden_dim)
+
         self.query_pos_head = MLP(4, 2 * hidden_dim, hidden_dim, num_layers=2)
 
         # encoder head

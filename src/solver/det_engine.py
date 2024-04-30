@@ -147,11 +147,22 @@ def train_one_epoch(
             param.requires_grad = False
         for param in model.encoder.parameters():
             param.requires_grad = False
-        for name_p, p in model.decoder.named_parameters():
-            if "prompt" in name_p:
-                p.requires_grad = True
-            else:
-                p.requires_grad = False
+
+        # for name_p, p in model.decoder.named_parameters():
+        #     if "prompt" in name_p:
+        #         p.requires_grad = True
+        #     if "dec_score_head" in name_p:
+        #         p.requires_grad = True
+        #     if "dec_bbox_head" in name_p:
+        #         p.requires_grad = True
+        #     if "query_pos_head" in name_p:
+        #         p.requires_grad = True
+        #     if "enc_score_head" in name_p:
+        #         p.requires_grad = True
+        #     if "enc_bbox_head" in name_p:
+        #         p.requires_grad = True
+        #     else:
+        #         p.requires_grad = False
 
     ema = kwargs.get("ema", None)
     scaler = kwargs.get("scaler", None)
@@ -225,8 +236,6 @@ def train_one_epoch(
                 torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm)
 
             optimizer.step()
-
-            gc.collect()
 
         if ema is not None:
             ema.update(model)

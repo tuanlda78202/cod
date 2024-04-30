@@ -1,6 +1,6 @@
 # WandB
 wandb_mode: "disabled"
-wandb_name: "4040_t0_prompt_10e"
+wandb_name: "4040_t0_prompt"
 
 # CL Strategy
 pseudo_label: False
