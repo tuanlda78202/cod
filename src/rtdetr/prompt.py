@@ -21,7 +21,7 @@ class PromptCOD(nn.Module):
         emb_dim=512,
         key_dim=512,
         top_k=3,
-        pool_size=40,  # number of classes task-id
+        pool_size=40,
         c_length=6,
         g_length=6,
         g_layers=[0, 1],
@@ -117,8 +117,9 @@ class PromptAttention(nn.Module):
     def get_attention_map(self):
         return self.attention_map
 
-    def forward(self, x, register_hook=False, prompt=None):
+    def forward(self, x, prompt=None):
         B, N, C = x.shape
+
         qkv = (
             self.qkv(x)
             .reshape(B, N, 3, self.num_heads, C // self.num_heads)
@@ -144,10 +145,6 @@ class PromptAttention(nn.Module):
         attn = (q @ k.transpose(-2, -1)) * self.scale
         attn = attn.softmax(dim=-1)
         attn = self.attn_drop(attn)
-
-        if register_hook:
-            self.save_attention_map(attn)
-            attn.register_hook(self.save_attn_gradients)
 
         x = (attn @ v).transpose(1, 2).reshape(B, N, C)
         x = self.proj(x)
