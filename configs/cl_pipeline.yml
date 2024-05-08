@@ -1,6 +1,6 @@
 # WandB
 wandb_mode: "disabled"
-wandb_name: "4040_t0_prompt"
+wandb_name: "4040_t0_prompt-mlp"
 
 # CL Strategy
 pseudo_label: False

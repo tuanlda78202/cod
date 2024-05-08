@@ -39,6 +39,9 @@ class PromptCOD(nn.Module):
         self.g_length = g_length
         self.c_length = c_length
 
+        self.activation = nn.ReLU()
+        self.project_prompt = nn.Linear(emb_dim, emb_dim)
+
         for l in self.g_layers:
             p = init_prompt(self.g_length, emb_dim)
             setattr(self, f"g_{l}", p)
@@ -47,7 +50,13 @@ class PromptCOD(nn.Module):
             p = init_prompt(self.pool_size, self.c_length, emb_dim)
             setattr(self, f"c_{l}", p)
 
+    def forward_ffn(self, x):
+        return self.activation(self.project_prompt(x))
+
     def forward(self, l, x_block, x_query, key):
+        x_query = x_query.to("cuda")
+        key = key.to("cuda")
+
         x_query = x_query.squeeze(1)
 
         if l in self.g_layers:
@@ -63,6 +72,8 @@ class PromptCOD(nn.Module):
             B, C = x_query.shape
             p = getattr(self, f"c_{l}")
             K_fix = key
+
+            x_query = self.forward_ffn(x_query)
 
             q = nn.functional.normalize(x_query, dim=1)
             n_K = nn.functional.normalize(K_fix, dim=1)
