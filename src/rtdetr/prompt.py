@@ -39,8 +39,8 @@ class PromptCOD(nn.Module):
         self.g_length = g_length
         self.c_length = c_length
 
-        self.activation = nn.ReLU()
-        self.project_prompt = nn.Linear(emb_dim, emb_dim)
+        self.image_project = nn.Linear(emb_dim, emb_dim)
+        self.text_project = nn.Linear(emb_dim, emb_dim)
 
         for l in self.g_layers:
             p = init_prompt(self.g_length, emb_dim)
@@ -49,9 +49,6 @@ class PromptCOD(nn.Module):
         for l in self.c_layers:
             p = init_prompt(self.pool_size, self.c_length, emb_dim)
             setattr(self, f"c_{l}", p)
-
-    def forward_ffn(self, x):
-        return self.activation(self.project_prompt(x))
 
     def forward(self, l, x_block, x_query, key):
         x_query = x_query.to("cuda")
@@ -73,7 +70,8 @@ class PromptCOD(nn.Module):
             p = getattr(self, f"c_{l}")
             K_fix = key
 
-            x_query = self.forward_ffn(x_query)
+            x_query = self.image_project(x_query)
+            K_fix = self.text_project(K_fix)
 
             q = nn.functional.normalize(x_query, dim=1)
             n_K = nn.functional.normalize(K_fix, dim=1)
