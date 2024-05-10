@@ -220,14 +220,17 @@ def train_one_epoch(
             optimizer.zero_grad()
 
         else:
-            outputs = model(samples, targets, img_feats, text_feat)
+            text_feat = text_feat.detach()
+            outputs, prompt_loss = model(samples, targets, img_feats, text_feat)
 
             loss_dict = criterion(outputs, targets)
 
             loss = sum(loss_dict.values())
 
             if distill_attn:
-                loss = loss + location_loss * 2
+                loss += location_loss * 2
+
+            loss += prompt_loss
 
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
@@ -285,7 +288,7 @@ def evaluate(
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-        outputs = model(samples, image_query=img_feats, text_key=text_feat)
+        outputs, prompt_loss = model(samples, image_query=img_feats, text_key=text_feat)
 
         orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
         results = postprocessors(outputs, orig_target_sizes)

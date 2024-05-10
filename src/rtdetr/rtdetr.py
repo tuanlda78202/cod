@@ -45,6 +45,6 @@ class RTDETR(nn.Module):
 
         x = self.backbone(x)
         x = self.encoder(x)
-        x = self.decoder(x, targets, image_query, text_key)
+        x, prompt_loss = self.decoder(x, targets, image_query, text_key)
 
-        return x
+        return x, prompt_loss

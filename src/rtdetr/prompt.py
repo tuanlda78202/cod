@@ -42,6 +42,9 @@ class PromptCOD(nn.Module):
         self.image_project = nn.Linear(emb_dim, emb_dim)
         self.text_project = nn.Linear(emb_dim, emb_dim)
 
+        self.image_relu = nn.ReLU()
+        self.text_relu = nn.ReLU()
+
         for l in self.g_layers:
             p = init_prompt(self.g_length, emb_dim)
             setattr(self, f"g_{l}", p)
@@ -53,7 +56,6 @@ class PromptCOD(nn.Module):
     def forward(self, l, x_block, x_query, key):
         x_query = x_query.to("cuda")
         key = key.to("cuda")
-
         x_query = x_query.squeeze(1)
 
         if l in self.g_layers:
@@ -65,20 +67,24 @@ class PromptCOD(nn.Module):
             Gv = P_[:, j:, :]
             p_return = [Gk, Gv]
 
+            prompt_loss = 0
+
         if l in self.c_layers:
             B, C = x_query.shape
             p = getattr(self, f"c_{l}")
             K_fix = key
 
-            x_query = self.image_project(x_query)
-            K_fix = self.text_project(K_fix)
+            q = self.image_relu(self.image_project(x_query))
+            K_fix = self.text_relu(self.text_project(K_fix))
 
             q = nn.functional.normalize(x_query, dim=1)
             n_K = nn.functional.normalize(K_fix, dim=1)
             cos_sim = torch.einsum("bj,kj->bk", q, n_K)
 
             top_k = torch.topk(cos_sim, self.top_k, dim=1)
-            P_ = p[top_k.indices]
+            k_idx = top_k.indices
+            prompt_loss = (1.0 - cos_sim[:, k_idx]).sum()
+            P_ = p[k_idx]
 
             i = int(self.c_length / 2)
             Ck = P_[:, :, :i, :].reshape((B, -1, self.emb_dim))
@@ -88,8 +94,9 @@ class PromptCOD(nn.Module):
 
         else:
             p_return = None
+            prompt_loss = 0
 
-        return p_return, x_block
+        return p_return, prompt_loss, x_block
 
 
 # Self Attention - Prefix tuning

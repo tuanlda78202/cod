@@ -278,12 +278,18 @@ class TransformerDecoder(nn.Module):
         dec_out_logits = []
         ref_points_detach = F.sigmoid(ref_points_unact)
 
+        prompt_loss_total = torch.zeros((1,), requires_grad=True).cuda()
+
         for idx, layer in enumerate(self.layers):
             ref_points_input = ref_points_detach.unsqueeze(2)
             query_pos_embed = query_pos_head(ref_points_detach)
 
             if prompt is not None:
-                p_list, output = prompt.forward(idx, output, image_query, text_key)
+                p_list, prompt_loss, output = prompt.forward(
+                    idx, output, image_query, text_key
+                )
+
+            prompt_loss_total += prompt_loss
 
             output = layer(
                 output,
@@ -320,7 +326,7 @@ class TransformerDecoder(nn.Module):
                 inter_ref_bbox.detach() if self.training else inter_ref_bbox
             )
 
-        return torch.stack(dec_out_bboxes), torch.stack(dec_out_logits)
+        return torch.stack(dec_out_bboxes), torch.stack(dec_out_logits), prompt_loss
 
 
 @register
@@ -660,7 +666,7 @@ class RTDETRTransformer(nn.Module):
         )
 
         # decoder
-        out_bboxes, out_logits = self.decoder(
+        out_bboxes, out_logits, prompt_loss = self.decoder(
             target,
             init_ref_points_unact,
             memory,
@@ -695,7 +701,7 @@ class RTDETRTransformer(nn.Module):
                 out["dn_aux_outputs"] = self._set_aux_loss(dn_out_logits, dn_out_bboxes)
                 out["dn_meta"] = dn_meta
 
-        return out
+        return out, prompt_loss
 
     @torch.jit.unused
     def _set_aux_loss(self, outputs_class, outputs_coord):
