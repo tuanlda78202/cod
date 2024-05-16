@@ -36,12 +36,12 @@ class PromptCOD(nn.Module):
         self,
         emb_dim=512,
         key_dim=512,
-        top_k=5,
+        top_k=4,
         pool_size=40,
         c_length=20,
-        g_length=10,
+        g_length=12,
         g_layers=[0, 1],
-        c_layers=[2, 3, 4, 5],
+        c_layers=[2, 3],
     ):
         super().__init__()
         self.emb_dim = emb_dim
@@ -58,8 +58,6 @@ class PromptCOD(nn.Module):
         # MLP
         self.image_project = FFN(emb_dim, emb_dim)
         self.text_project = FFN(key_dim, key_dim)
-        
-        
 
         for l in self.g_layers:
             p = init_prompt(self.g_length, emb_dim)
@@ -113,7 +111,7 @@ class PromptCOD(nn.Module):
         return p_return, prompt_loss, x_block
 
 
-# Self Attention - Prefix tuning
+# Prefix Tuning
 class PromptAttention(nn.Module):
     def __init__(
         self,

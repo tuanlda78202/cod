@@ -49,6 +49,13 @@ def main(
         config=cfg.config_info,
         mode=cfg.wandb_mode,
     )
+    wandb.run.log_code(
+        "../",
+        include_fn=lambda path: path.endswith(".py") or path.endswith(".yml"),
+        exclude_fn=lambda path, root: os.path.relpath(path, root).startswith(
+            "outputs/"
+        ),
+    )
 
     solver = TASKS[cfg.yaml_cfg["task"]](cfg)
 
