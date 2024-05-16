@@ -136,13 +136,13 @@ def train_one_epoch(
     distill_attn: bool = None,
     teacher_path: str = None,
     text_feat: torch.Tensor = None,
-    prompt_mode: bool = True,
+    prompt_freeze: bool = False,
     **kwargs,
 ):
     model.train()
     criterion.train()
 
-    if prompt_mode:
+    if prompt_freeze:
         for param in model.backbone.parameters():
             param.requires_grad = False
         for param in model.encoder.parameters():
