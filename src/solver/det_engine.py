@@ -136,7 +136,7 @@ def train_one_epoch(
     distill_attn: bool = None,
     teacher_path: str = None,
     text_feat: torch.Tensor = None,
-    prompt_freeze: bool = False,
+    prompt_freeze: bool = True,
     **kwargs,
 ):
     model.train()

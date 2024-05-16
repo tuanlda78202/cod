@@ -4,7 +4,6 @@ from src.data import get_coco_api_from_dataset
 from .solver import BaseSolver
 from .det_engine import train_one_epoch, evaluate
 
-import torch
 from termcolor import cprint
 
 
@@ -20,8 +19,9 @@ class DetSolver(BaseSolver):
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
         task_idx = self.train_dataloader.dataset.task_idx
         data_ratio = self.train_dataloader.dataset.data_ratio
-        text_feat = self.train_dataloader.dataset.text_feat
-        # text_feat = None
+
+        train_text_feat = self.train_dataloader.dataset.text_feat
+        val_text_feat = self.val_dataloader.dataset.text_feat
 
         # self.model = torch.compile(self.model)
 
@@ -46,7 +46,7 @@ class DetSolver(BaseSolver):
                 pseudo_label=args.pseudo_label,
                 distill_attn=args.distill_attn,
                 teacher_path=args.teacher_path,
-                text_feat=text_feat,
+                text_feat=train_text_feat,
             )
 
             self.lr_scheduler.step()
@@ -67,7 +67,7 @@ class DetSolver(BaseSolver):
                 self.val_dataloader,
                 base_ds,
                 self.device,
-                text_feat=text_feat,
+                text_feat=val_text_feat,
             )
 
     def val(
@@ -77,7 +77,6 @@ class DetSolver(BaseSolver):
 
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
         text_feat = self.val_dataloader.dataset.text_feat
-        # text_feat = None
 
         module = self.ema.module if self.ema else self.model
 
