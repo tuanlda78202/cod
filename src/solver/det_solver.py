@@ -4,6 +4,7 @@ from src.data import get_coco_api_from_dataset
 from .solver import BaseSolver
 from .det_engine import train_one_epoch, evaluate
 
+import torch
 from termcolor import cprint
 
 
@@ -20,6 +21,9 @@ class DetSolver(BaseSolver):
         task_idx = self.train_dataloader.dataset.task_idx
         data_ratio = self.train_dataloader.dataset.data_ratio
         text_feat = self.train_dataloader.dataset.text_feat
+        # text_feat = None
+
+        # self.model = torch.compile(self.model)
 
         cprint(f"Task {task_idx} training...", "red", "on_yellow")
 
@@ -73,6 +77,7 @@ class DetSolver(BaseSolver):
 
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
         text_feat = self.val_dataloader.dataset.text_feat
+        # text_feat = None
 
         module = self.ema.module if self.ema else self.model
 

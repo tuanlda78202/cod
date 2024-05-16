@@ -10,6 +10,22 @@ def init_prompt(dim1, dim2, dim3=None):
     return prompt
 
 
+class FFN(nn.Module):
+    def __init__(self, dim, hidden_dim, dropout=0.0):
+        super().__init__()
+        self.net = nn.Sequential(
+            nn.LayerNorm(dim),
+            nn.Linear(dim, hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(hidden_dim, dim),
+            nn.Dropout(dropout),
+        )
+
+    def forward(self, x):
+        return self.net(x)
+
+
 class PromptCOD(nn.Module):
     """
     Query: CLIP Image features
@@ -20,12 +36,12 @@ class PromptCOD(nn.Module):
         self,
         emb_dim=512,
         key_dim=512,
-        top_k=3,
+        top_k=5,
         pool_size=40,
-        c_length=6,
-        g_length=6,
+        c_length=20,
+        g_length=10,
         g_layers=[0, 1],
-        c_layers=[2, 3],
+        c_layers=[2, 3, 4, 5],
     ):
         super().__init__()
         self.emb_dim = emb_dim
@@ -39,11 +55,11 @@ class PromptCOD(nn.Module):
         self.g_length = g_length
         self.c_length = c_length
 
-        self.image_project = nn.Linear(emb_dim, emb_dim)
-        self.text_project = nn.Linear(emb_dim, emb_dim)
-
-        self.image_relu = nn.ReLU()
-        self.text_relu = nn.ReLU()
+        # MLP
+        self.image_project = FFN(emb_dim, emb_dim)
+        self.text_project = FFN(key_dim, key_dim)
+        
+        
 
         for l in self.g_layers:
             p = init_prompt(self.g_length, emb_dim)
@@ -54,10 +70,8 @@ class PromptCOD(nn.Module):
             setattr(self, f"c_{l}", p)
 
     def forward(self, l, x_block, x_query, key):
-        x_query = x_query.to("cuda")
+        x_query = x_query.squeeze(1).to("cuda")
         key = key.to("cuda")
-        x_query = x_query.squeeze(1)
-
         if l in self.g_layers:
             p = getattr(self, f"g_{l}")
             P_ = p.expand(len(x_query), -1, -1)
@@ -74,16 +88,16 @@ class PromptCOD(nn.Module):
             p = getattr(self, f"c_{l}")
             K_fix = key
 
-            q = self.image_relu(self.image_project(x_query))
-            K_fix = self.text_relu(self.text_project(K_fix))
+            x_query = self.image_project(x_query)
+            K_fix = self.text_project(K_fix)
 
             q = nn.functional.normalize(x_query, dim=1)
             n_K = nn.functional.normalize(K_fix, dim=1)
-            cos_sim = torch.einsum("bj,kj->bk", q, n_K)
+            sim = torch.einsum("bj,kj->bk", q, n_K)
 
-            top_k = torch.topk(cos_sim, self.top_k, dim=1)
+            top_k = torch.topk(sim, self.top_k, dim=1)
             k_idx = top_k.indices
-            prompt_loss = (1.0 - cos_sim[:, k_idx]).sum()
+            prompt_loss = (1.0 - sim[:, k_idx]).sum()
             P_ = p[k_idx]
 
             i = int(self.c_length / 2)

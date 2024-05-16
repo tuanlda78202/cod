@@ -80,7 +80,6 @@ class CocoDetectionCL(CocoCache):
         self.clip_processor = AutoProcessor.from_pretrained(
             "openai/clip-vit-base-patch32", low_cpu_mem_usage=True
         )
-        tokenizer = AutoTokenizer.from_pretrained("openai/clip-vit-base-patch32")
 
         # CLIP Text
         label_task_current = [
@@ -88,6 +87,7 @@ class CocoDetectionCL(CocoCache):
             for cat in class_ids_current
             if cat in list(mscoco_category2name.keys())
         ]
+        tokenizer = AutoTokenizer.from_pretrained("openai/clip-vit-base-patch32")
         label_inputs = tokenizer(label_task_current, padding=True, return_tensors="pt")
 
         self.text_feat = self.clip_model.get_text_features(**label_inputs)

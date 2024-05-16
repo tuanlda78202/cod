@@ -1,6 +1,6 @@
 # WandB
-wandb_mode: "disabled"
-wandb_name: "4040_t0_prompt-loss-decoder-mlp"
+wandb_mode: "online"
+wandb_name: "4040_t0_prompt-loss-mlp-onlyprompt"
 
 # CL Strategy
 pseudo_label: False

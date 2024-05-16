@@ -13,7 +13,7 @@ from pyexpat import model
 import copy
 import wandb
 from tqdm import tqdm
-import gc
+from torchinfo import summary
 
 
 def load_model_params(model: model, ckpt_path: str = None):
@@ -147,22 +147,22 @@ def train_one_epoch(
             param.requires_grad = False
         for param in model.encoder.parameters():
             param.requires_grad = False
-
-    # for name_p, p in model.decoder.named_parameters():
-    #     if "prompt" in name_p:
-    #         p.requires_grad = True
-    #     if "dec_score_head" in name_p:
-    #         p.requires_grad = True
-    #     if "dec_bbox_head" in name_p:
-    #         p.requires_grad = True
-    #     if "query_pos_head" in name_p:
-    #         p.requires_grad = True
-    #     if "enc_score_head" in name_p:
-    #         p.requires_grad = True
-    #     if "enc_bbox_head" in name_p:
-    #         p.requires_grad = True
-    #     else:
-    #         p.requires_grad = False
+        for name_p, p in model.decoder.named_parameters():
+            if "prompt" in name_p:
+                p.requires_grad = True
+            elif "dec_score_head" in name_p:
+                p.requires_grad = True
+            elif "dec_bbox_head" in name_p:
+                p.requires_grad = True
+            elif "query_pos_head" in name_p:
+                p.requires_grad = True
+            ##############################################
+            elif "enc_score_head" in name_p:
+                p.requires_grad = True
+            elif "denoising_class_embed" in name_p:
+                p.requires_grad = True
+            else:
+                p.requires_grad = False
 
     ema = kwargs.get("ema", None)
     scaler = kwargs.get("scaler", None)
@@ -220,6 +220,17 @@ def train_one_epoch(
             optimizer.zero_grad()
 
         else:
+            # summary(
+            #     model,
+            #     input_type=[
+            #         (samples.shape, torch.float32),
+            #         (img_feats.shape, torch.float32),
+            #         (text_feat.shape, torch.float32),
+            #     ],
+            #     device=device,
+            #     depth=3,
+            # )
+
             text_feat = text_feat.detach()
             outputs, prompt_loss = model(samples, targets, img_feats, text_feat)
 
@@ -230,7 +241,7 @@ def train_one_epoch(
             if distill_attn:
                 loss += location_loss * 2
 
-            loss += prompt_loss
+            loss += prompt_loss[0]
 
             optimizer.zero_grad(set_to_none=True)
             loss.backward()
@@ -248,17 +259,10 @@ def train_one_epoch(
 
         tqdm_batch.set_postfix(
             rtdetr_loss=loss_value.item(),
-            kd_loss=location_loss.item() if distill_attn else 0,
-            total_loss=loss.item() if distill_attn else 0,
+            prompt_loss=prompt_loss[0].item(),
         )
 
-        wandb.log(
-            {
-                "RT-DETR Loss": loss_value,
-                "KD Loss": (location_loss.item() if distill_attn else 0),
-                "Total Loss": (loss.item() if distill_attn else 0),
-            }
-        )
+        wandb.log({"RT-DETR Loss": loss_value, "Prompt Loss": prompt_loss[0].item()})
 
 
 @torch.no_grad()
@@ -288,7 +292,7 @@ def evaluate(
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-        outputs, prompt_loss = model(samples, image_query=img_feats, text_key=text_feat)
+        outputs, _ = model(samples, image_query=img_feats, text_key=text_feat)
 
         orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
         results = postprocessors(outputs, orig_target_sizes)

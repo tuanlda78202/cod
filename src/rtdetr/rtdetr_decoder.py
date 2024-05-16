@@ -326,7 +326,11 @@ class TransformerDecoder(nn.Module):
                 inter_ref_bbox.detach() if self.training else inter_ref_bbox
             )
 
-        return torch.stack(dec_out_bboxes), torch.stack(dec_out_logits), prompt_loss
+        return (
+            torch.stack(dec_out_bboxes),
+            torch.stack(dec_out_logits),
+            prompt_loss_total,
+        )
 
 
 @register
