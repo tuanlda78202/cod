@@ -1,4 +1,4 @@
-- [Get Started](#get-started)
+- [Get Start](#get-start)
   - [Installation](#installation)
   - [Download COCO](#download-coco)
 - [RT-DETR Zoo](#rt-detr-zoo)
@@ -7,7 +7,7 @@
   - [CL Training](#cl-training)
 - [Contributors](#contributors)
   
-# Get Started
+# Get Start
 
 <details>
 <summary>Folder Structure</summary>
