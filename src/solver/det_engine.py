@@ -189,6 +189,12 @@ def train_one_epoch(
 
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
+        # store_list = []
+        # for x in targets:
+        #     store_list.append(x["labels"])
+        # print("*******************")
+        # print([tensor.tolist() for tensor in store_list], sep="\n")
+
         if distill_attn:
             teacher_attn = compute_attn(teacher_model, samples, targets, device)
             student_attn = compute_attn(model, samples, targets, device, mode="student")
@@ -273,7 +279,7 @@ def evaluate(
     data_loader,
     base_ds,
     device,
-    text_feat: torch.Tensor = None,
+    val_text_feat: torch.Tensor = None,
 ):
     model.eval()
     criterion.eval()
@@ -288,11 +294,17 @@ def evaluate(
         unit="it",
     )
 
-    for batch_idx, (samples, targets, img_feats) in enumerate(valid_tqdm_batch):
+    for _, (samples, targets, val_img_feats) in enumerate(valid_tqdm_batch):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
-        outputs, _ = model(samples, image_query=img_feats, text_key=text_feat)
+        # store_list = []
+        # for x in targets:
+        #     store_list.append(x["labels"])
+        # print("*******************")
+        # print([tensor.tolist() for tensor in store_list], sep="\n")
+
+        outputs, _ = model(samples, image_query=val_img_feats, text_key=val_text_feat)
 
         orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
         results = postprocessors(outputs, orig_target_sizes)
@@ -303,7 +315,6 @@ def evaluate(
         }
         coco_evaluator.update(res)
 
-    # gather the stats from all processes
     coco_evaluator.synchronize_between_processes()
     coco_evaluator.accumulate()
     coco_evaluator.summarize()

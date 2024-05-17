@@ -67,7 +67,7 @@ class DetSolver(BaseSolver):
                 self.val_dataloader,
                 base_ds,
                 self.device,
-                text_feat=val_text_feat,
+                val_text_feat=val_text_feat,
             )
 
     def val(
@@ -76,7 +76,7 @@ class DetSolver(BaseSolver):
         self.eval()
 
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
-        text_feat = self.val_dataloader.dataset.text_feat
+        val_text_feat = self.val_dataloader.dataset.text_feat
 
         module = self.ema.module if self.ema else self.model
 
@@ -87,5 +87,5 @@ class DetSolver(BaseSolver):
             self.val_dataloader,
             base_ds,
             self.device,
-            text_feat=text_feat,
+            val_text_feat=val_text_feat,
         )

@@ -83,7 +83,7 @@ class CocoDetectionCL(CocoCache):
 
         # CLIP Text
         label_task_current = [
-            mscoco_category2name[cat]
+            "a photo of " + mscoco_category2name[cat]
             for cat in class_ids_current
             if cat in list(mscoco_category2name.keys())
         ]

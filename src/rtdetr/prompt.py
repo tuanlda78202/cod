@@ -36,7 +36,7 @@ class PromptCOD(nn.Module):
         self,
         emb_dim=512,
         key_dim=512,
-        top_k=4,
+        top_k=3,
         pool_size=40,
         c_length=20,
         g_length=12,
@@ -86,8 +86,8 @@ class PromptCOD(nn.Module):
             p = getattr(self, f"c_{l}")
             K_fix = key
 
-            x_query = self.image_project(x_query)
-            K_fix = self.text_project(K_fix)
+            # x_query = self.image_project(x_query)
+            # K_fix = self.text_project(K_fix)
 
             q = nn.functional.normalize(x_query, dim=1)
             n_K = nn.functional.normalize(K_fix, dim=1)
@@ -95,6 +95,10 @@ class PromptCOD(nn.Module):
 
             top_k = torch.topk(sim, self.top_k, dim=1)
             k_idx = top_k.indices
+
+            # if l == 3:
+            #     print(k_idx)
+
             prompt_loss = (1.0 - sim[:, k_idx]).sum()
             P_ = p[k_idx]
 
