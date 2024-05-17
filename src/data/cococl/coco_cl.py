@@ -6,16 +6,9 @@ import torchvision
 torchvision.disable_beta_transforms_warning()
 
 from torchvision import datapoints
-
 from pycocotools import mask as coco_mask
-from transformers import AutoProcessor, AutoTokenizer, CLIPModel
-
-import os
-
-os.environ["TOKENIZERS_PARALLELISM"] = "false"
 
 from src.core import register
-
 from .coco_cache import CocoCache
 from .cl_utils import data_setting
 
@@ -73,31 +66,8 @@ class CocoDetectionCL(CocoCache):
         self.return_masks = return_masks
         self.remap_mscoco_category = remap_mscoco_category
 
-        # CLIP
-        self.clip_model = CLIPModel.from_pretrained(
-            "openai/clip-vit-base-patch32", low_cpu_mem_usage=True
-        )
-        self.clip_processor = AutoProcessor.from_pretrained(
-            "openai/clip-vit-base-patch32", low_cpu_mem_usage=True
-        )
-
-        # CLIP Text
-        label_task_current = [
-            "a photo of " + mscoco_category2name[cat]
-            for cat in class_ids_current
-            if cat in list(mscoco_category2name.keys())
-        ]
-        tokenizer = AutoTokenizer.from_pretrained("openai/clip-vit-base-patch32")
-        label_inputs = tokenizer(label_task_current, padding=True, return_tensors="pt")
-
-        self.text_feat = self.clip_model.get_text_features(**label_inputs)
-
     def __getitem__(self, idx):
         img, target = super(CocoDetectionCL, self).__getitem__(idx)
-
-        # CLIP Image
-        clip_inputs = self.clip_processor(images=img, return_tensors="pt")
-        img_feat = self.clip_model.get_image_features(**clip_inputs)
 
         image_id = self.ids[idx]
         target = {"image_id": image_id, "annotations": target}
@@ -117,7 +87,7 @@ class CocoDetectionCL(CocoCache):
         if self._transforms is not None:
             img, target = self._transforms(img, target)
 
-        return img, target, img_feat.clone().detach()
+        return img, target
 
     def extra_repr(self) -> str:
         s = f" img_folder: {self.img_folder}\n ann_file: {self.ann_file}\n"

@@ -135,14 +135,13 @@ def train_one_epoch(
     pseudo_label: bool = None,
     distill_attn: bool = None,
     teacher_path: str = None,
-    text_feat: torch.Tensor = None,
-    prompt_freeze: bool = True,
+    peft_mode: bool = False,
     **kwargs,
 ):
     model.train()
     criterion.train()
 
-    if prompt_freeze:
+    if peft_mode:
         for param in model.backbone.parameters():
             param.requires_grad = False
         for param in model.encoder.parameters():
@@ -184,16 +183,10 @@ def train_one_epoch(
         unit="it",
     )
 
-    for _, (samples, targets, img_feats) in enumerate(tqdm_batch):
+    for _, (samples, targets) in enumerate(tqdm_batch):
         samples = samples.to(device)
 
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
-        # store_list = []
-        # for x in targets:
-        #     store_list.append(x["labels"])
-        # print("*******************")
-        # print([tensor.tolist() for tensor in store_list], sep="\n")
 
         if distill_attn:
             teacher_attn = compute_attn(teacher_model, samples, targets, device)
@@ -237,8 +230,7 @@ def train_one_epoch(
             #     depth=3,
             # )
 
-            text_feat = text_feat.detach()
-            outputs, prompt_loss = model(samples, targets, img_feats, text_feat)
+            outputs = model(samples, targets)
 
             loss_dict = criterion(outputs, targets)
 
@@ -247,9 +239,8 @@ def train_one_epoch(
             if distill_attn:
                 loss += location_loss * 2
 
-            loss += prompt_loss[0]
-
             optimizer.zero_grad(set_to_none=True)
+
             loss.backward()
 
             if max_norm > 0:
@@ -265,10 +256,9 @@ def train_one_epoch(
 
         tqdm_batch.set_postfix(
             rtdetr_loss=loss_value.item(),
-            prompt_loss=prompt_loss[0].item(),
         )
 
-        wandb.log({"RT-DETR Loss": loss_value, "Prompt Loss": prompt_loss[0].item()})
+        wandb.log({"RT-DETR Loss": loss_value})
 
 
 @torch.no_grad()
@@ -279,7 +269,6 @@ def evaluate(
     data_loader,
     base_ds,
     device,
-    val_text_feat: torch.Tensor = None,
 ):
     model.eval()
     criterion.eval()
@@ -294,17 +283,10 @@ def evaluate(
         unit="it",
     )
 
-    for _, (samples, targets, val_img_feats) in enumerate(valid_tqdm_batch):
+    for _, (samples, targets) in enumerate(valid_tqdm_batch):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
-
-        # store_list = []
-        # for x in targets:
-        #     store_list.append(x["labels"])
-        # print("*******************")
-        # print([tensor.tolist() for tensor in store_list], sep="\n")
-
-        outputs, _ = model(samples, image_query=val_img_feats, text_key=val_text_feat)
+        outputs = model(samples)
 
         orig_target_sizes = torch.stack([t["orig_size"] for t in targets], dim=0)
         results = postprocessors(outputs, orig_target_sizes)

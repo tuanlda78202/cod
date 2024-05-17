@@ -1,6 +1,6 @@
 # WandB
-wandb_mode: "online"
-wandb_name: "4040_t0_prompt-loss-mlp-clipfix-dec"
+wandb_mode: "disabled"
+wandb_name: "4040_t0_adapter"
 
 # CL Strategy
 pseudo_label: False

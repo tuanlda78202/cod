@@ -10,7 +10,7 @@ import torch.nn.init as init
 from .denoising import get_contrastive_denoising_training_group
 from .utils import deformable_attention_core_func, get_activation, inverse_sigmoid
 from .utils import bias_init_with_prob
-from .prompt import PromptCOD, PromptAttention
+
 
 from src.core import register
 
@@ -177,22 +177,19 @@ class TransformerDecoderLayer(nn.Module):
     ):
         super(TransformerDecoderLayer, self).__init__()
 
-        # Self Attention
+        # self attention
         self.self_attn = nn.MultiheadAttention(
             d_model, n_head, dropout=dropout, batch_first=True
         )
         self.dropout1 = nn.Dropout(dropout)
         self.norm1 = nn.LayerNorm(d_model)
 
-        # Prompt Attention
-        self.prompt_attn = PromptAttention(d_model, n_head, attn_drop=dropout)
-
-        # Cross Attention
+        # cross attention
         self.cross_attn = MSDeformableAttention(d_model, n_head, n_levels, n_points)
         self.dropout2 = nn.Dropout(dropout)
         self.norm2 = nn.LayerNorm(d_model)
 
-        # FFN
+        # ffn
         self.linear1 = nn.Linear(d_model, dim_feedforward)
         self.activation = getattr(F, activation)
         self.dropout3 = nn.Dropout(dropout)
@@ -216,17 +213,12 @@ class TransformerDecoderLayer(nn.Module):
         attn_mask=None,
         memory_mask=None,
         query_pos_embed=None,
-        prompt=None,
     ):
-        if prompt is not None:
-            tgt2 = self.prompt_attn(tgt, prompt=prompt)
-            tgt = tgt + self.dropout1(tgt2)
-            tgt = self.norm1(tgt)
-        else:
-            q = k = self.with_pos_embed(tgt, query_pos_embed)
-            tgt2, _ = self.self_attn(q, k, value=tgt, attn_mask=attn_mask)
-            tgt = tgt + self.dropout1(tgt2)
-            tgt = self.norm1(tgt)
+        # self attention
+        q = k = self.with_pos_embed(tgt, query_pos_embed)
+        tgt2, _ = self.self_attn(q, k, value=tgt, attn_mask=attn_mask)
+        tgt = tgt + self.dropout1(tgt2)
+        tgt = self.norm1(tgt)
 
         # cross attention
         tgt2 = self.cross_attn(
@@ -269,27 +261,15 @@ class TransformerDecoder(nn.Module):
         query_pos_head,
         attn_mask=None,
         memory_mask=None,
-        prompt=None,
-        image_query=None,
-        text_key=None,
     ):
         output = tgt
         dec_out_bboxes = []
         dec_out_logits = []
         ref_points_detach = F.sigmoid(ref_points_unact)
 
-        prompt_loss_total = torch.zeros((1,), requires_grad=True).cuda()
-
-        for idx, layer in enumerate(self.layers):
+        for i, layer in enumerate(self.layers):
             ref_points_input = ref_points_detach.unsqueeze(2)
             query_pos_embed = query_pos_head(ref_points_detach)
-
-            if prompt is not None:
-                p_list, prompt_loss, output = prompt.forward(
-                    idx, output, image_query, text_key
-                )
-
-            prompt_loss_total += prompt_loss
 
             output = layer(
                 output,
@@ -300,24 +280,23 @@ class TransformerDecoder(nn.Module):
                 attn_mask,
                 memory_mask,
                 query_pos_embed,
-                prompt=p_list,
             )
 
             inter_ref_bbox = F.sigmoid(
-                bbox_head[idx](output) + inverse_sigmoid(ref_points_detach)
+                bbox_head[i](output) + inverse_sigmoid(ref_points_detach)
             )
 
             if self.training:
-                dec_out_logits.append(score_head[idx](output))
-                if idx == 0:
+                dec_out_logits.append(score_head[i](output))
+                if i == 0:
                     dec_out_bboxes.append(inter_ref_bbox)
                 else:
                     dec_out_bboxes.append(
-                        F.sigmoid(bbox_head[idx](output) + inverse_sigmoid(ref_points))
+                        F.sigmoid(bbox_head[i](output) + inverse_sigmoid(ref_points))
                     )
 
-            elif idx == self.eval_idx:
-                dec_out_logits.append(score_head[idx](output))
+            elif i == self.eval_idx:
+                dec_out_logits.append(score_head[i](output))
                 dec_out_bboxes.append(inter_ref_bbox)
                 break
 
@@ -326,11 +305,7 @@ class TransformerDecoder(nn.Module):
                 inter_ref_bbox.detach() if self.training else inter_ref_bbox
             )
 
-        return (
-            torch.stack(dec_out_bboxes),
-            torch.stack(dec_out_logits),
-            prompt_loss_total,
-        )
+        return torch.stack(dec_out_bboxes), torch.stack(dec_out_logits)
 
 
 @register
@@ -404,9 +379,6 @@ class RTDETRTransformer(nn.Module):
         self.label_noise_ratio = label_noise_ratio
         self.box_noise_scale = box_noise_scale
 
-        # prompt
-        self.prompt = PromptCOD()
-
         # denoising
         if num_denoising > 0:
             self.denoising_class_embed = nn.Embedding(
@@ -417,7 +389,6 @@ class RTDETRTransformer(nn.Module):
         self.learnt_init_query = learnt_init_query
         if learnt_init_query:
             self.tgt_embed = nn.Embedding(num_queries, hidden_dim)
-
         self.query_pos_head = MLP(4, 2 * hidden_dim, hidden_dim, num_layers=2)
 
         # encoder head
@@ -637,7 +608,7 @@ class RTDETRTransformer(nn.Module):
 
         return target, reference_points_unact.detach(), enc_topk_bboxes, enc_topk_logits
 
-    def forward(self, feats, targets=None, image_query=None, text_key=None):
+    def forward(self, feats, targets=None):
 
         # input projection and embedding
         (memory, spatial_shapes, level_start_index) = self._get_encoder_input(feats)
@@ -670,7 +641,7 @@ class RTDETRTransformer(nn.Module):
         )
 
         # decoder
-        out_bboxes, out_logits, prompt_loss = self.decoder(
+        out_bboxes, out_logits = self.decoder(
             target,
             init_ref_points_unact,
             memory,
@@ -680,9 +651,6 @@ class RTDETRTransformer(nn.Module):
             self.dec_score_head,
             self.query_pos_head,
             attn_mask=attn_mask,
-            prompt=self.prompt,
-            image_query=image_query,
-            text_key=text_key,
         )
 
         if self.training and dn_meta is not None:
@@ -705,7 +673,7 @@ class RTDETRTransformer(nn.Module):
                 out["dn_aux_outputs"] = self._set_aux_loss(dn_out_logits, dn_out_bboxes)
                 out["dn_meta"] = dn_meta
 
-        return out, prompt_loss
+        return out
 
     @torch.jit.unused
     def _set_aux_loss(self, outputs_class, outputs_coord):

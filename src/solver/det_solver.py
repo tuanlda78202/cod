@@ -20,9 +20,6 @@ class DetSolver(BaseSolver):
         task_idx = self.train_dataloader.dataset.task_idx
         data_ratio = self.train_dataloader.dataset.data_ratio
 
-        train_text_feat = self.train_dataloader.dataset.text_feat
-        val_text_feat = self.val_dataloader.dataset.text_feat
-
         # self.model = torch.compile(self.model)
 
         cprint(f"Task {task_idx} training...", "red", "on_yellow")
@@ -46,7 +43,6 @@ class DetSolver(BaseSolver):
                 pseudo_label=args.pseudo_label,
                 distill_attn=args.distill_attn,
                 teacher_path=args.teacher_path,
-                text_feat=train_text_feat,
             )
 
             self.lr_scheduler.step()
@@ -67,7 +63,6 @@ class DetSolver(BaseSolver):
                 self.val_dataloader,
                 base_ds,
                 self.device,
-                val_text_feat=val_text_feat,
             )
 
     def val(
@@ -76,8 +71,6 @@ class DetSolver(BaseSolver):
         self.eval()
 
         base_ds = get_coco_api_from_dataset(self.val_dataloader.dataset)
-        val_text_feat = self.val_dataloader.dataset.text_feat
-
         module = self.ema.module if self.ema else self.model
 
         evaluate(
@@ -87,5 +80,4 @@ class DetSolver(BaseSolver):
             self.val_dataloader,
             base_ds,
             self.device,
-            val_text_feat=val_text_feat,
         )
