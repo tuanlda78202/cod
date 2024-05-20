@@ -1,6 +1,11 @@
 # WandB
-wandb_mode: "disabled"
-wandb_name: "4040_t0_adapter"
+wandb_mode: "online"
+wandb_name: "4040_t0_lora-linear+conv+embed"
+
+# LoRA
+lora_train: True
+lora_val: True
+lora_id: "outputs/weights/lora_4040_t0_1"
 
 # CL Strategy
 pseudo_label: False

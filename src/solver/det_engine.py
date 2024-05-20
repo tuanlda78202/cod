@@ -135,35 +135,12 @@ def train_one_epoch(
     pseudo_label: bool = None,
     distill_attn: bool = None,
     teacher_path: str = None,
-    peft_mode: bool = False,
     **kwargs,
 ):
     model.train()
     criterion.train()
 
-    if peft_mode:
-        for param in model.backbone.parameters():
-            param.requires_grad = False
-        for param in model.encoder.parameters():
-            param.requires_grad = False
-        for name_p, p in model.decoder.named_parameters():
-            if "prompt" in name_p:
-                p.requires_grad = True
-            elif "dec_score_head" in name_p:
-                p.requires_grad = True
-            elif "dec_bbox_head" in name_p:
-                p.requires_grad = True
-            elif "query_pos_head" in name_p:
-                p.requires_grad = True
-            ##############################################
-            elif "enc_score_head" in name_p:
-                p.requires_grad = True
-            elif "denoising_class_embed" in name_p:
-                p.requires_grad = True
-            else:
-                p.requires_grad = False
-
-    ema = kwargs.get("ema", None)
+    # ema = kwargs.get("ema", None)
     scaler = kwargs.get("scaler", None)
     divided_classes = data_setting(data_ratio)
 
@@ -223,13 +200,10 @@ def train_one_epoch(
             #     model,
             #     input_type=[
             #         (samples.shape, torch.float32),
-            #         (img_feats.shape, torch.float32),
-            #         (text_feat.shape, torch.float32),
             #     ],
             #     device=device,
             #     depth=3,
             # )
-
             outputs = model(samples, targets)
 
             loss_dict = criterion(outputs, targets)
@@ -248,8 +222,8 @@ def train_one_epoch(
 
             optimizer.step()
 
-        if ema is not None:
-            ema.update(model)
+        # if ema is not None:
+        #     ema.update(model)
 
         loss_dict_reduced = reduce_dict(loss_dict)
         loss_value = sum(loss_dict_reduced.values())

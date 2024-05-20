@@ -50,6 +50,11 @@ class YAMLConfig(BaseConfig):
         self.wandb_mode = cfg.get("wandb_mode", "disabled")
         self.config_info = copy.deepcopy(self.yaml_cfg)
 
+        # * LoRA
+        self.lora_train = cfg.get("lora_train", False)
+        self.lora_val = cfg.get("lora_val", False)
+        self.lora_id = cfg.get("lora_id", None)
+
         # * CL Rehearsal
         self.rehearsal = cfg.get("rehearsal", False)
         self.construct_replay: bool = False
