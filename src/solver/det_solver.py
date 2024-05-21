@@ -22,17 +22,23 @@ class DetSolver(BaseSolver):
         data_ratio = self.train_dataloader.dataset.data_ratio
 
         if args.lora_train:
-            lora_modules = [
-                name
-                for name, module in self.model.named_modules()
-                if any(
-                    layer in str(type(module))
-                    for layer in ["Linear", "linear", "Conv2d", "Embedding"]
+            if not args.lora_cl:
+                lora_modules = [
+                    name
+                    for name, module in self.model.named_modules()
+                    if any(
+                        layer in str(type(module))
+                        for layer in ["Linear", "linear", "Conv2d", "Embedding"]
+                    )
+                    and "Identity" not in str(type(module))
+                ]
+                config = LoraConfig(target_modules=lora_modules)
+                self.lora_model = get_peft_model(self.model, config)
+            else:
+                self.lora_model = PeftModel.from_pretrained(
+                    self.model, args.teacher_path, is_trainable=True
                 )
-                and "Identity" not in str(type(module))
-            ]
-            config = LoraConfig(target_modules=lora_modules)
-            self.lora_model = get_peft_model(self.model, config)
+
             self.lora_model.print_trainable_parameters()
 
             lora_params = [
@@ -76,19 +82,20 @@ class DetSolver(BaseSolver):
                     pseudo_label=args.pseudo_label,
                     distill_attn=args.distill_attn,
                     teacher_path=args.teacher_path,
+                    base_model=self.model,
                 )
 
                 self.lr_scheduler.step()
 
                 if self.output_dir:
                     if (epoch + 1) % args.checkpoint_step == 0:
-                        lora_id = (
+                        lora_pt = (
                             self.output_dir / f"lora_{data_ratio}_t{task_idx}_{epoch+1}"
                         )
 
-                        self.lora_model.save_pretrained(lora_id)
+                        self.lora_model.save_pretrained(lora_pt)
 
-                ap = evaluate(
+                evaluate(
                     self.lora_model,
                     self.criterion,
                     self.postprocessor,
@@ -126,7 +133,7 @@ class DetSolver(BaseSolver):
                         )
                         dist.save_on_master(self.state_dict(epoch), checkpoint_path)
 
-                ap = evaluate(
+                evaluate(
                     module,
                     self.criterion,
                     self.postprocessor,

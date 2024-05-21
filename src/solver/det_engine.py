@@ -14,6 +14,7 @@ import copy
 import wandb
 from tqdm import tqdm
 from torchinfo import summary
+from peft import PeftModel
 
 
 def load_model_params(model: model, ckpt_path: str = None):
@@ -135,6 +136,7 @@ def train_one_epoch(
     pseudo_label: bool = None,
     distill_attn: bool = None,
     teacher_path: str = None,
+    base_model: torch.nn.Module = None,
     **kwargs,
 ):
     model.train()
@@ -149,9 +151,12 @@ def train_one_epoch(
         cprint("Normal Training...", "black", "on_yellow")
 
     if pseudo_label or distill_attn:
-        teacher_copy = copy.deepcopy(model)
-        teacher_model = load_model_params(teacher_copy, teacher_path)
+        teacher_copy = copy.deepcopy(base_model)
+        teacher_model = PeftModel.from_pretrained(
+            teacher_copy, teacher_path, is_trainable=False
+        )
         teacher_model.eval()
+        cprint("Teacher Model load successfully!", "black", "on_yellow")
 
     tqdm_batch = tqdm(
         iterable=data_loader,
@@ -290,5 +295,3 @@ def evaluate(
             "AP@0.5:0.95 Large": stats["coco_eval_bbox"][5] * 100,
         }
     )
-
-    return stats["coco_eval_bbox"][0] * 100

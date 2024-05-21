@@ -11,7 +11,7 @@ RTDETR:
   multi_scale: [480, 512, 544, 576, 608, 640, 640, 640, 672, 704, 736, 768, 800]
 
   # CL change here
-  task_idx: 0
+  task_idx: 1
 
 PResNet:
   depth: 50

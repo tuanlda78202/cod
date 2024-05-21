@@ -54,6 +54,7 @@ class YAMLConfig(BaseConfig):
         self.lora_train = cfg.get("lora_train", False)
         self.lora_val = cfg.get("lora_val", False)
         self.lora_id = cfg.get("lora_id", None)
+        self.lora_cl = cfg.get("lora_cl", None)
 
         # * CL Rehearsal
         self.rehearsal = cfg.get("rehearsal", False)
