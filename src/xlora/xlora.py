@@ -83,7 +83,7 @@ def convert_layers_to_xlora(
 def add_xlora_to_model(
     model: PreTrainedModel,
     xlora_config: xLoRAConfig,
-    verbose: bool = False,
+    verbose: bool = True,
     **kwargs,
 ) -> xLoRAModel:
     """

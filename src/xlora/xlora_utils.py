@@ -12,7 +12,7 @@ from transformers import AutoModelForCausalLM, AutoTokenizer  # type: ignore
 from transformers.tokenization_utils import PreTrainedTokenizer  # type: ignore
 from transformers.tokenization_utils_fast import PreTrainedTokenizerFast  # type: ignore
 
-from xlora.xlora_config import xLoRAConfig  # type: ignore
+from .xlora_config import xLoRAConfig  # type: ignore
 
 from .xlora import from_pretrained, xLoRAModel  # type: ignore
 

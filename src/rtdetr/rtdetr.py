@@ -32,7 +32,7 @@ class RTDETR(nn.Module):
         if self.multi_scale and self.training and self.task_idx == 0:
             cprint(f"Multi-scale first task training: {self.multi_scale}", "red")
 
-    def forward(self, x, targets=None):
+    def forward(self, x, targets):
         if self.multi_scale and self.training and self.task_idx == 0:
             sz = np.random.choice(self.multi_scale)
             x = F.interpolate(x, size=[sz, sz])

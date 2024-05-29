@@ -51,10 +51,10 @@ class xLoRAConfig:
 
     model_type = "xlora"
 
-    hidden_size: int
-    base_model_id: str
     device: torch.device
     adapters: Dict[str, str]
+    hidden_size: int = 256
+    base_model_id: str = None
     enable_softmax: bool = True
     enable_softmax_topk: bool = False
     layerwise_scalings: bool = False

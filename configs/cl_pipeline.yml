@@ -1,5 +1,5 @@
 # WandB
-wandb_mode: "online"
+wandb_mode: "disabled"
 wandb_name: "4040_t1_owlora-linear+conv+embed-b01-fq-distllatnn"
 
 # LoRA
@@ -9,8 +9,8 @@ lora_id: ""
 
 # CL Strategy
 lora_cl: True
-pseudo_label: True
-distill_attn: True
+pseudo_label: False
+distill_attn: False
 teacher_path: "outputs/lora/lora_4040_t0_6_5602_547"
 # CL General
 # start_task: 0

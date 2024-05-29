@@ -7,6 +7,7 @@ from .det_engine import train_one_epoch, evaluate
 from termcolor import cprint
 from peft import LoraConfig, get_peft_model, PeftModel
 import torch
+from src.xlora import add_xlora_to_model, xLoRAConfig
 
 
 class DetSolver(BaseSolver):
@@ -21,44 +22,57 @@ class DetSolver(BaseSolver):
         task_idx = self.train_dataloader.dataset.task_idx
         data_ratio = self.train_dataloader.dataset.data_ratio
 
-        if args.lora_train:
-            if not args.lora_cl:
-                lora_modules = [
-                    name
-                    for name, module in self.model.named_modules()
-                    if any(
-                        layer in str(type(module))
-                        for layer in ["Linear", "linear", "Conv2d", "Embedding"]
-                    )
-                    and "Identity" not in str(type(module))
-                ]
-                config = LoraConfig(target_modules=lora_modules)
-                self.lora_model = get_peft_model(self.model, config)
-            else:
-                self.lora_model = PeftModel.from_pretrained(
-                    self.model, args.teacher_path, is_trainable=True
-                )
+        self.lora_model = add_xlora_to_model(
+            model=self.model,
+            xlora_config=xLoRAConfig(
+                xlora_depth=8,
+                device=torch.device("cuda"),
+                adapters={
+                    "adapter1": "outputs/xlora/lora_4040_t0_6_5602_547",
+                    "adapter2": "outputs/xlora/lora_4040_t1_9",
+                },
+            ),
+        )
+        self.lora_model.print_trainable_parameters()
 
-            self.lora_model.print_trainable_parameters()
+        # if args.lora_train:
+        #     if not args.lora_cl:
+        #         lora_modules = [
+        #             name
+        #             for name, module in self.model.named_modules()
+        #             if any(
+        #                 layer in str(type(module))
+        #                 for layer in ["Linear", "linear", "Conv2d", "Embedding"]
+        #             )
+        #             and "Identity" not in str(type(module))
+        #         ]
+        #         config = LoraConfig(target_modules=lora_modules)
+        #         self.lora_model = get_peft_model(self.model, config)
+        #     else:
+        #         self.lora_model = PeftModel.from_pretrained(
+        #             self.model, args.teacher_path, is_trainable=True
+        #         )
 
-            lora_params = [
-                {
-                    "params": [
-                        p
-                        for n, p in getattr(self.lora_model, part).named_parameters()
-                        if "lora" in n
-                    ],
-                    **params,
-                }
-                for part, params in zip(
-                    ["backbone", "encoder", "decoder"],
-                    [{"lr": 0.00001}, {"weight_decay": 0.0}, {"weight_decay": 0.0}],
-                )
-            ]
+        #     self.lora_model.print_trainable_parameters()
 
-            self.optimizer = torch.optim.AdamW(
-                lora_params, lr=0.0001, betas=(0.9, 0.999), weight_decay=0.0001
-            )
+        #     lora_params = [
+        #         {
+        #             "params": [
+        #                 p
+        #                 for n, p in getattr(self.lora_model, part).named_parameters()
+        #                 if "lora" in n
+        #             ],
+        #             **params,
+        #         }
+        #         for part, params in zip(
+        #             ["backbone", "encoder", "decoder"],
+        #             [{"lr": 0.00001}, {"weight_decay": 0.0}, {"weight_decay": 0.0}],
+        #         )
+        #     ]
+
+        #     self.optimizer = torch.optim.AdamW(
+        #         lora_params, lr=0.0001, betas=(0.9, 0.999), weight_decay=0.0001
+        #     )
 
         cprint(f"Task {task_idx} training...", "red", "on_yellow")
 

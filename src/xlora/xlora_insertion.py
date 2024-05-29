@@ -9,8 +9,8 @@ from peft.tuners.tuners_utils import BaseTuner  # type: ignore
 from safetensors.torch import save_model  # type: ignore
 from torch import Tensor
 
-from xlora.xlora_classifier import Number, xLoRAClassifier
-from xlora.xlora_config import xLoRAConfig
+from .xlora_classifier import Number, xLoRAClassifier
+from .xlora_config import xLoRAConfig
 
 
 class xLoRALayer:
