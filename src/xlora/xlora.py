@@ -100,8 +100,8 @@ def add_xlora_to_model(
             The new model.
     """
 
-    if hasattr(model.config, "use_cache"):
-        assert not model.config.use_cache, "`use_cache` must be False"
+    # if hasattr(model.config, "use_cache"):
+    #     assert not model.config.use_cache, "`use_cache` must be False"
 
     use_trainable_adapters = xlora_config.use_trainable_adapters
     if verbose:
@@ -152,7 +152,7 @@ def add_xlora_to_model(
     model_peft.base_model.set_adapter(list(xlora_config.adapters.keys()))
 
     def hook(module, *args, **kwargs) -> None:
-        args_real = args[0]
+        args_real = args
         kwargs_real: dict = args[1]
         kwargs_real.update(kwargs)
 

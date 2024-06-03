@@ -41,8 +41,9 @@ class xLoRALayer:
         x: torch.Tensor, scalings_layer: torch.Tensor, adapter: int
     ) -> torch.Tensor:
         # scalings_layer = [batch_size, seq_len, n_classes]
-        scalings = scalings_layer[:, :, adapter].unsqueeze(-1)
+        scalings = scalings_layer[:, :, adapter].unsqueeze(-1).to("cuda")
         # scalings_layer = [batch_size, seq_len, 1]
+        print(x.shape, scalings.shape)
         return x * scalings
 
     def get_maybe_topk_scalings(self) -> torch.Tensor:
@@ -171,7 +172,6 @@ class xLoRAConv2dLayer(xLoRALayer):
         This method is designed to be a drop-in-replacement for the peft LoRA layers' .forward method.
         To use it, a bound method must be created (bound to an instance of the xLoRALayer class).
         """
-
         previous_dtype = x.dtype
         xlora_scalings = self.get_maybe_topk_scalings()
 

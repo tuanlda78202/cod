@@ -143,41 +143,40 @@ class xLoRAClassifier(nn.Module):
 
     def forward(
         self,
-        input_ids: Optional[torch.LongTensor] = None,
-        inputs_embeds: Optional[torch.FloatTensor] = None,
+        # input_ids: Optional[torch.LongTensor] = None,
+        # inputs_embeds: Optional[torch.FloatTensor] = None,
         *args,
         **kwargs,
     ) -> torch.Tensor:
         """
         Using the hidden states of the model, predict `n_classes` LoRA alpha values. Sets the scalings.
         """
-        if input_ids is not None:
-            batch_size = input_ids.shape[0]
-        else:
-            batch_size = typing.cast(torch.FloatTensor, inputs_embeds).shape[0]
+        # if input_ids is not None:
+        #     batch_size = input_ids.shape[0]
+        # else:
+        #     batch_size = typing.cast(torch.FloatTensor, inputs_embeds).shape[0]
 
-        if input_ids is not None:
-            seq_len = input_ids.shape[1]
-        else:
-            seq_len = typing.cast(torch.FloatTensor, inputs_embeds).shape[1]
+        # if input_ids is not None:
+        #     seq_len = input_ids.shape[1]
+        # else:
+        #     seq_len = typing.cast(torch.FloatTensor, inputs_embeds).shape[1]
 
         # For type checking
         model: PeftModel = self.model  # type: ignore
+
         with torch.no_grad():
             with model.disable_adapter():
-                kwargs["output_hidden_states"] = True
-                kwargs["return_dict"] = True
+                # kwargs["output_hidden_states"] = True
+                # kwargs["return_dict"] = True
 
-                result: ModelOutput = model.forward(
-                    *args,
-                    input_ids=input_ids,
-                    inputs_embeds=inputs_embeds,
+                result = model.forward(
+                    args[0][0],
+                    args[0][1],
                     _xlora_classifier_inhibitor_flag=InhibitorFlagPayload(
-                        batch_size=batch_size,
-                        seq_len=seq_len,
+                        batch_size=1,
+                        seq_len=640,
                         override_scaling_pass_value=self.override_scaling_pass_value,
                     ),
-                    **kwargs,
                 )
 
         hidden_states = result.hidden_states  # type: ignore

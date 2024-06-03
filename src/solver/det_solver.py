@@ -28,8 +28,8 @@ class DetSolver(BaseSolver):
                 xlora_depth=8,
                 device=torch.device("cuda"),
                 adapters={
-                    "adapter1": "outputs/xlora/lora_4040_t0_6_5602_547",
-                    "adapter2": "outputs/xlora/lora_4040_t1_9",
+                    "adapter1": "outputs/temp/",
+                    "adapter2": "outputs/temp",
                 },
             ),
         )
@@ -40,10 +40,7 @@ class DetSolver(BaseSolver):
         #         lora_modules = [
         #             name
         #             for name, module in self.model.named_modules()
-        #             if any(
-        #                 layer in str(type(module))
-        #                 for layer in ["Linear", "linear", "Conv2d", "Embedding"]
-        #             )
+        #             if any(layer in str(type(module)) for layer in ["Linear", "linear"])
         #             and "Identity" not in str(type(module))
         #         ]
         #         config = LoraConfig(target_modules=lora_modules)
