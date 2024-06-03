@@ -49,6 +49,13 @@ def main(
         config=cfg.config_info,
         mode=cfg.wandb_mode,
     )
+    wandb.run.log_code(
+        ".",
+        include_fn=lambda path: path.endswith(".py") or path.endswith(".yml"),
+        exclude_fn=lambda path, root: os.path.relpath(path, root).startswith(
+            "outputs/"
+        ),
+    )
 
     solver = TASKS[cfg.yaml_cfg["task"]](cfg)
 
@@ -78,7 +85,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--tuning",
         "-t",
-        default="../detrw/7010/7010_t0_10e_ap5474.pth",
+        default="../detrw/rtdetr_r50_1xe_o365.pth",
         type=str,
     )
     parser.add_argument(

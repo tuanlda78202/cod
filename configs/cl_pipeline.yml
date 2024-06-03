@@ -1,11 +1,17 @@
 # WandB
 wandb_mode: "online"
-wandb_name: "7010_t1_10e"
+wandb_name: "4040_t1_owlora-linear+conv+embed-b01-fq-distllatnn"
+
+# LoRA
+lora_train: True
+lora_val: True
+lora_id: ""
 
 # CL Strategy
+lora_cl: True
 pseudo_label: True
 distill_attn: True
-teacher_path: "../detrw/7010/7010_t0_10e_ap5474.pth"
+teacher_path: "outputs/lora/lora_4040_t0_6_5602_547"
 # CL General
 # start_task: 0
 # total_tasks: 2

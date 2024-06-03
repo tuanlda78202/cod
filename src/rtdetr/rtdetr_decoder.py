@@ -197,14 +197,6 @@ class TransformerDecoderLayer(nn.Module):
         self.dropout4 = nn.Dropout(dropout)
         self.norm3 = nn.LayerNorm(d_model)
 
-        # self._reset_parameters()
-
-    # def _reset_parameters(self):
-    #     linear_init_(self.linear1)
-    #     linear_init_(self.linear2)
-    #     xavier_uniform_(self.linear1.weight)
-    #     xavier_uniform_(self.linear2.weight)
-
     def with_pos_embed(self, tensor, pos):
         return tensor if pos is None else tensor + pos
 
@@ -224,13 +216,6 @@ class TransformerDecoderLayer(nn.Module):
     ):
         # self attention
         q = k = self.with_pos_embed(tgt, query_pos_embed)
-
-        # if attn_mask is not None:
-        #     attn_mask = torch.where(
-        #         attn_mask.to(torch.bool),
-        #         torch.zeros_like(attn_mask),
-        #         torch.full_like(attn_mask, float('-inf'), dtype=tgt.dtype))
-
         tgt2, _ = self.self_attn(q, k, value=tgt, attn_mask=attn_mask)
         tgt = tgt + self.dropout1(tgt2)
         tgt = self.norm1(tgt)

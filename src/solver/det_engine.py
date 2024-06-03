@@ -13,6 +13,8 @@ from pyexpat import model
 import copy
 import wandb
 from tqdm import tqdm
+from torchinfo import summary
+from peft import PeftModel
 
 
 def load_model_params(model: model, ckpt_path: str = None):
@@ -134,12 +136,13 @@ def train_one_epoch(
     pseudo_label: bool = None,
     distill_attn: bool = None,
     teacher_path: str = None,
+    base_model: torch.nn.Module = None,
     **kwargs,
 ):
     model.train()
     criterion.train()
 
-    ema = kwargs.get("ema", None)
+    # ema = kwargs.get("ema", None)
     scaler = kwargs.get("scaler", None)
     divided_classes = data_setting(data_ratio)
 
@@ -148,9 +151,12 @@ def train_one_epoch(
         cprint("Normal Training...", "black", "on_yellow")
 
     if pseudo_label or distill_attn:
-        teacher_copy = copy.deepcopy(model)
-        teacher_model = load_model_params(teacher_copy, teacher_path)
+        teacher_copy = copy.deepcopy(base_model)
+        teacher_model = PeftModel.from_pretrained(
+            teacher_copy, teacher_path, is_trainable=False
+        )
         teacher_model.eval()
+        cprint("Teacher Model load successfully!", "black", "on_yellow")
 
     tqdm_batch = tqdm(
         iterable=data_loader,
@@ -159,8 +165,9 @@ def train_one_epoch(
         unit="it",
     )
 
-    for _, (samples, targets, img_feats) in enumerate(tqdm_batch):
+    for _, (samples, targets) in enumerate(tqdm_batch):
         samples = samples.to(device)
+
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
 
         if distill_attn:
@@ -194,15 +201,25 @@ def train_one_epoch(
             optimizer.zero_grad()
 
         else:
+            # summary(
+            #     model,
+            #     input_type=[
+            #         (samples.shape, torch.float32),
+            #     ],
+            #     device=device,
+            #     depth=3,
+            # )
             outputs = model(samples, targets)
+
             loss_dict = criterion(outputs, targets)
 
             loss = sum(loss_dict.values())
 
             if distill_attn:
-                loss = loss + location_loss * 2
+                loss += location_loss * 2
 
             optimizer.zero_grad(set_to_none=True)
+
             loss.backward()
 
             if max_norm > 0:
@@ -210,25 +227,17 @@ def train_one_epoch(
 
             optimizer.step()
 
-        if ema is not None:
-            ema.update(model)
+        # if ema is not None:
+        #     ema.update(model)
 
         loss_dict_reduced = reduce_dict(loss_dict)
         loss_value = sum(loss_dict_reduced.values())
 
         tqdm_batch.set_postfix(
             rtdetr_loss=loss_value.item(),
-            kd_loss=location_loss.item() if distill_attn else 0,
-            total_loss=loss.item() if distill_attn else 0,
         )
 
-        wandb.log(
-            {
-                "RT-DETR Loss": loss_value,
-                "KD Loss": (location_loss.item() if distill_attn else 0),
-                "Total Loss": (loss.item() if distill_attn else 0),
-            }
-        )
+        wandb.log({"RT-DETR Loss": loss_value})
 
 
 @torch.no_grad()
@@ -253,7 +262,7 @@ def evaluate(
         unit="it",
     )
 
-    for batch_idx, (samples, targets, img_feats) in enumerate(valid_tqdm_batch):
+    for _, (samples, targets) in enumerate(valid_tqdm_batch):
         samples = samples.to(device)
         targets = [{k: v.to(device) for k, v in t.items()} for t in targets]
         outputs = model(samples)
@@ -267,7 +276,6 @@ def evaluate(
         }
         coco_evaluator.update(res)
 
-    # gather the stats from all processes
     coco_evaluator.synchronize_between_processes()
     coco_evaluator.accumulate()
     coco_evaluator.summarize()
@@ -287,5 +295,3 @@ def evaluate(
             "AP@0.5:0.95 Large": stats["coco_eval_bbox"][5] * 100,
         }
     )
-
-    return stats["coco_eval_bbox"][0] * 100
