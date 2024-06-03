@@ -1,6 +1,6 @@
 # WandB
 wandb_mode: "online"
-wandb_name: "4040_t1_owlora-linear+conv+embed-b01-fq-distllatnn"
+wandb_name: "7010-t0-10e-lora"
 
 # LoRA
 lora_train: True
@@ -8,16 +8,7 @@ lora_val: True
 lora_id: ""
 
 # CL Strategy
-lora_cl: True
-pseudo_label: True
-distill_attn: True
-teacher_path: "outputs/lora/lora_4040_t0_6_5602_547"
-# CL General
-# start_task: 0
-# total_tasks: 2
-
-# CL Rehearsal
-# rehearsal: False
-
-# CL Eval
-# fpp: False
+lora_cl: False
+pseudo_label: False
+distill_attn: False
+teacher_path: ""

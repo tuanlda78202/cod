@@ -15,10 +15,10 @@ train_dataloader:
         - { type: SanitizeBoundingBox, min_size: 1 }
         - { type: ConvertBox, out_fmt: "cxcywh", normalize: True }
 
-    # CL change here
-    data_ratio: "4040"
-    task_idx: 1
-    buffer_mode: True
+    # CL
+    data_ratio: "7010"
+    task_idx: 0
+    buffer_mode: False
     buffer_rate: 0.1
 
   shuffle: True
@@ -35,9 +35,9 @@ val_dataloader:
         - { type: ToImageTensor }
         - { type: ConvertDtype }
 
-    # CL change here
-    data_ratio: "80"
-    task_idx: 1
+    # CL
+    data_ratio: "7010"
+    task_idx: 0
     buffer_mode: False
 
   shuffle: False
