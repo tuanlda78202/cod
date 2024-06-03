@@ -45,7 +45,7 @@ class YAMLConfig(BaseConfig):
 
         # *  WandB
         self.wandb_name = cfg.get("wandb_name", None)
-        self.wandb_project = cfg.get("wandb_project", "cod")
+        self.wandb_project = cfg.get("wandb_project", "scale-cod")
         self.wandb_entity = cfg.get("wandb_entity", "tuanlda78202")
         self.wandb_mode = cfg.get("wandb_mode", "disabled")
         self.config_info = copy.deepcopy(self.yaml_cfg)
