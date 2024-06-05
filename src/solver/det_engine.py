@@ -137,6 +137,7 @@ def train_one_epoch(
     distill_attn: bool = None,
     teacher_path: str = None,
     base_model: torch.nn.Module = None,
+    lora_mode: bool = False,
     **kwargs,
 ):
     model.train()
@@ -151,11 +152,16 @@ def train_one_epoch(
         cprint("Normal Training...", "black", "on_yellow")
 
     if pseudo_label or distill_attn:
-        teacher_copy = copy.deepcopy(base_model)
-        teacher_model = PeftModel.from_pretrained(
-            teacher_copy, teacher_path, is_trainable=False
-        )
+        if lora_mode:
+            teacher_copy = copy.deepcopy(base_model)
+            teacher_model = PeftModel.from_pretrained(
+                teacher_copy, teacher_path, is_trainable=False
+            )
+        else:
+            teacher_copy = copy.deepcopy(model)
+            teacher_model = load_model_params(teacher_copy, teacher_path)
         teacher_model.eval()
+
         cprint("Teacher Model load successfully!", "black", "on_yellow")
 
     tqdm_batch = tqdm(

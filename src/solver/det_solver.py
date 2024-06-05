@@ -83,6 +83,7 @@ class DetSolver(BaseSolver):
                     distill_attn=args.distill_attn,
                     teacher_path=args.teacher_path,
                     base_model=self.model,
+                    lora_mode=True,
                 )
 
                 self.lr_scheduler.step()
