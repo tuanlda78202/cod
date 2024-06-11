@@ -1,6 +1,6 @@
 # WandB
 wandb_mode: "online"
-wandb_name: "7010-t0-10e-lora"
+wandb_name: "4040-t0-10e-lora"
 
 # LoRA
 lora_train: True

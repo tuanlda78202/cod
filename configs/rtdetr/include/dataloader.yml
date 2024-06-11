@@ -16,7 +16,7 @@ train_dataloader:
         - { type: ConvertBox, out_fmt: "cxcywh", normalize: True }
 
     # CL
-    data_ratio: "7010"
+    data_ratio: "4040"
     task_idx: 0
     buffer_mode: False
     buffer_rate: 0.1
@@ -36,12 +36,12 @@ val_dataloader:
         - { type: ConvertDtype }
 
     # CL
-    data_ratio: "7010"
+    data_ratio: "4040"
     task_idx: 0
     buffer_mode: False
 
   shuffle: False
   batch_size: 32
-  num_workers: 12
+  num_workers: 0
   collate_fn: default_collate_fn
   drop_last: False
