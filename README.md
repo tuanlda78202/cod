@@ -1,5 +1,5 @@
-# Efficient Detection Transformer for Incremental Object Detection
-- [Efficient Detection Transformer for Incremental Object Detection](#efficient-detection-transformer-for-incremental-object-detection)
+# Efficient Class Incremental Learning for Object Detection
+- [Efficient Class Incremental Learning for Object Detection](#efficient-class-incremental-learning-for-object-detection)
 - [Abstract](#abstract)
 - [Get Started](#get-started)
   - [Installation](#installation)
@@ -16,6 +16,9 @@
 
 # Abstract
 In the realm of object detection, both incremental and real-time challenges necessitate advanced strategies to improve performance without sacrificing speed or succumbing to catastrophic forgetting. In this paper, we introduce innovative methods for addressing challenges in object detection using transformer-based models. The Continual Detection Transformer (CL-DETR) enhances incremental object detection by incorporating Detector Knowledge Distillation (DKD) and an exemplar replay calibration strategy to mitigate catastrophic forgetting. Simultaneously, the Real-Time Detection Transformer (RT-DETR) optimizes for speed and accuracy in real-time scenarios through a hybrid encoder and IoU-aware query selection, eliminating the need for non-maximum suppression. Additionally, we explore the efficiency of Low-Rank Adaptation (LoRA), which significantly reduces trainable parameters in large-scale models by integrating trainable rank decomposition matrices, allowing for cost-effective adaptation without extensive retraining. These approaches collectively advance the performance and practicality of transformer-based object detection systems.
+| ![Architecture](https://github.com/tuanlda78202/cod/blob/main/configs/slide.png) | 
+|:--:| 
+| Schematic of ECOD Framework|
 
   
 # Get Started
