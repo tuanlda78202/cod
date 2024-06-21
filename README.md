@@ -17,7 +17,7 @@
 
 # Abstract
 Object Detection, a critical task in computer vision, involves identifying and localizing items within an image. Continual Object Detection (COD) extends this by incrementally introducing training samples for different object categories, posing challenges due to limited access to past data and Catastrophic Forgetting. Traditional techniques like Knowledge Distillation and Exemplar Replay often fall short, and models with large parameters prolong training times, creating computational constraints. To address these issues, this study proposes the Efficient Continual Detection Transformer (ECOD), leveraging an efficient pretrained detector for generalization, pseudo-labeling for new data, and knowledge distillation on attention layers. LoRA optimizes parameter efficiency, reducing the parameters needed for fine-tuning while maintaining high performance. Extensive experiments on the COCO dataset validate this approach, demonstrating its superiority over state-of-the-art methods with only 3% of the trainable parameters, thus advancing the field of COD.
-| ![Architecture](https://github.com/tuanlda78202/cod/blob/main/configs/slide.png) | 
+| ![Architecture](https://github.com/tuanlda78202/cod/blob/main/configs/model.png) | 
 |:--:| 
 | Schematic of ECOD Framework|
 
