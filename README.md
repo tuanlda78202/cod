@@ -5,12 +5,14 @@
   - [Installation](#installation)
   - [Download COCO](#download-coco)
 - [Experiments](#experiments)
-  - [COCO](#coco)
+  - [MS-COCO](#ms-coco)
     - [40+40](#4040)
     - [70+10](#7010)
 - [Training](#training)
   - [Normal training](#normal-training)
-  - [CL Training](#cl-training)
+  - [Incremental Training](#incremental-training)
+- [Citation](#citation)
+- [Contact](#contact)
 - [Contributors](#contributors)
 
 # Abstract
@@ -40,7 +42,7 @@ cd ..
 ```
 # Experiments
 
-## COCO
+## MS-COCO
 
 ### 40+40
 | Method         | Baseline        | AP  | AP<sub>50</sub> | AP<sub>75</sub> | AP<sub>S</sub> | AP<sub>M</sub> | AP<sub>L</sub> |
@@ -49,10 +51,10 @@ cd ..
 | RILOD          | GFLv1           |  29.9 |  45.0 |  32.9 |  18.5 |  33.0 |  40.5 |
 | SID            | GFLv1           |  34.0 |  51.4 |  36.3 |  18.4 |  38.4 |  44.9 |
 | ERD            | GFLv1           |  36.9 |  54.5 |  39.6 |  21.3 |  40.3 |  47.3 |
-| CL-DETR        | Deformable DETR |  42.0 |  60.1 |  51.2 |  24.0 |  48.4 |  55.6 |
-| SDDGR          | Deformable DETR |  43.0 |  62.1 |  47.1 |  24.9 |  46.9 |  57.0 |
-| ECOD (Ours) | RT-DETR  |  **47.1** | **63.6** | **51.2** | **30.0** | **50.8** | **61.7** |
-| Improv. (%)| -             | **9.53** | **2.42** | **8.70** | **20.48** | **8.32** | **8.25** |
+| CL-DETR        | Deformable DETR   |  42.0 |  60.1 |  51.2 |  24.0 |  48.4 |  55.6 |
+| SDDGR          | Deformable DETR   |  43.0 |  62.1 |  47.1 |  24.9 |  46.9 |  57.0 |
+| ECOD (Ours) | RT-DETR               |  **47.1** | **63.6** | **51.2** | **30.0** | **50.8** | **61.7** |
+| Relative Improv. (%)| -             | **9.5** | **2.4** | **0.0** | **20.5** | **5.0** | **8.3** |
 
 ### 70+10
 | Method         | Baseline        | AP  | AP<sub>50</sub> | AP<sub>75</sub> | AP<sub>S</sub> | AP<sub>M</sub> | AP<sub>L</sub> |
@@ -66,8 +68,8 @@ cd ..
 | CL-DETR        | Deformable DETR | 35.8  | 53.5  | 39.5  | 19.4  | 43.0  | 48.6  |
 | SDDGR          | Deformable DETR | 38.6  | 56.2  | 42.1  | 22.3  | 43.5  | 51.4  |
 | VLM-PL         | Deformable DETR | 39.8  | 58.2  | 43.2  | 22.4  | 43.5  | 51.6  |
-| ECL-DETR (Ours) | RT-DETR  |  **43.6** | **58.8** | **47.7** | **27.7** | **47.8** | **58.1** |
-| Improv. (%) | -             | **9.55** | **1.03** | **10.42** | **23.66** | **9.89** | **12.60** |
+| ECOD (Ours) | RT-DETR  |  **43.6** | **58.8** | **47.7** | **27.7** | **47.8** | **58.1** |
+| Relative Improv. (%) | -             | **9.6** | **1.0** | **10.4** | **23.7** | **9.9** | **12.6** |
 
 
 
@@ -82,7 +84,7 @@ python scripts/train.py -t /path/to/ckpt/objects365
 python scripts/train.py -r /path/to/ckpt/training --test-only
 ```
 
-## CL Training
+## Incremental Training
 * `configs/rtdetr/include/dataloader.yml`
   * `data_ratio` (`4040`, `7010`, `402020`, `4010101010`)
   * If CL, choose `task_idx` $\ge$ 1
@@ -98,6 +100,23 @@ python scripts/train.py -r /path/to/ckpt/training --test-only
 # Note: Clean cache WandB
 ps aux|grep wandb|grep -v grep | awk '{print $2}'|xargs kill -9
 ```
+
+# Citation
+If you find my work useful in your research, please cite:
+```
+@misc{tuanlda78202,
+  author = {Le Duc Anh Tuan},
+  title = {Efficient Class Incremental Learning for Object Detection},
+  year = {2024},
+  publisher = {GitHub},
+  journal = {GitHub repository},
+  howpublished = {\url{https://github.com/tuanlda78202/cod}},
+  commit = {31d9bed36a06fbc86c3f7b587367cd33a16cc535}
+}
+```
+
+# Contact
+If you have any questions, please feel free to email the [authors.](tuanleducanh78202@gmail.com)
 
 # Contributors 
 <a href="https://github.com/tuanlda78202/cod/graphs/contributors">
