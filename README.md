@@ -1,4 +1,7 @@
 # Efficient Class Incremental Learning for Object Detection
+[![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)](https://colab.research.google.com/github/tuanlda78202/cod/)
+![GitHub commit activity](https://img.shields.io/github/commit-activity/m/tuanlda78202/cod?color=%23F7CAC9&label=Commit&logo=Battle.net&logoColor=%23DFCFBE&style=flat-square) ![GitHub last commit](https://img.shields.io/github/last-commit/tuanlda78202/cod?color=%23F7CAC9&label=Last%20Commit&logo=Google%20Photos&logoColor=%23DFCFBE&style=flat-square) ![GitHub repo size](https://img.shields.io/github/repo-size/tuanlda78202/cod?color=%23F7CAC9&label=Repo%20Size&logo=Databricks&logoColor=%23DFCFBE&style=flat-square)  
+
 - [Efficient Class Incremental Learning for Object Detection](#efficient-class-incremental-learning-for-object-detection)
 - [Abstract](#abstract)
 - [Get Started](#get-started)
@@ -118,7 +121,19 @@ If you find my work useful in your research, please cite:
 # Contact
 If you have any questions, please feel free to email the [authors.](tuanleducanh78202@gmail.com)
 
+# Star History
+
+<a href="https://star-history.com/#tuanlda78202/cod&Date">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="https://api.star-history.com/svg?repos=tuanlda78202/cod&type=Date&theme=dark" />
+    <source media="(prefers-color-scheme: light)" srcset="https://api.star-history.com/svg?repos=tuanlda78202/cod&type=Date" />
+    <img alt="Star History Chart" src="https://api.star-history.com/svg?repos=alshedivat/al-folio&type=Date" />
+  </picture>
+</a>
+
 # Contributors 
 <a href="https://github.com/tuanlda78202/cod/graphs/contributors">
 <img src="https://contrib.rocks/image?repo=tuanlda78202/cod" /></a>
 </a>
+
+
