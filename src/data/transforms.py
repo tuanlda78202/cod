@@ -19,6 +19,7 @@ __all__ = [
     "Compose",
 ]
 
+Image.MAX_IMAGE_PIXELS = None
 
 RandomPhotometricDistort = register(T.RandomPhotometricDistort)
 RandomZoomOut = register(T.RandomZoomOut)
