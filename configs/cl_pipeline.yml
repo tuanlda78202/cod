@@ -1,14 +1,14 @@
 # WandB
-wandb_mode: "online"
-wandb_name: "4040-t0-10e-lora"
+wandb_mode: "disabled"
+wandb_name: "7010s-10e-norm"
 
 # LoRA
-lora_train: True
-lora_val: True
+lora_train: False
+lora_val: False
 lora_id: ""
 
 # CL Strategy
 lora_cl: False
-pseudo_label: False
-distill_attn: False
+pseudo_label: True
+distill_attn: True
 teacher_path: ""

@@ -1,6 +1,6 @@
 __include__: [
   '../runtime.yml',
-  '../dataset/coco_detection.yml',
+  '../dataset/mtsd_detection.yml',
   './include/dataloader.yml',
   './include/optimizer.yml',
   './include/rtdetr_r50vd.yml',

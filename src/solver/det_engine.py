@@ -19,7 +19,7 @@ from peft import PeftModel
 
 def load_model_params(model: model, ckpt_path: str = None):
     new_model_dict = model.state_dict()
-
+    print("Loading from checkpoint: ", ckpt_path)
     checkpoint = torch.load(ckpt_path)
     pretrained_model = checkpoint["model"]
     name_list = [
@@ -142,6 +142,7 @@ def train_one_epoch(
 ):
     model.train()
     criterion.train()
+    # cprint("Device: ", device)
 
     # ema = kwargs.get("ema", None)
     scaler = kwargs.get("scaler", None)

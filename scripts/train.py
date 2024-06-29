@@ -1,6 +1,8 @@
 import os
 import sys
 
+import PIL
+
 sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
 import argparse
 
@@ -68,7 +70,7 @@ def main(
 
 
 if __name__ == "__main__":
-
+    PIL.Image.MAX_IMAGE_PIXELS = None
     parser = argparse.ArgumentParser()
 
     parser.add_argument(

@@ -6,10 +6,10 @@ remap_mscoco_category: True
 train_dataloader:
   type: DataLoader
   dataset:
-    type: CocoDetectionCL
+    type: MTSDDetectionCL
 
-    img_folder: coco/train2017/
-    ann_file: coco/annotations/instances_train2017.json
+    img_folder: mtsd/mtsd_train/
+    ann_file: mtsd/annotations/instances_train_c1.json
 
     transforms:
       type: Compose
@@ -18,10 +18,10 @@ train_dataloader:
 val_dataloader:
   type: DataLoader
   dataset:
-    type: CocoDetectionCL
+    type: MTSDDetectionCL
 
-    img_folder: coco/val2017/
-    ann_file: coco/annotations/instances_val2017.json
+    img_folder: mtsd/mtsd_val/
+    ann_file: mtsd/annotations/instances_val_c1.json
 
     transforms:
       type: Compose
