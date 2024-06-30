@@ -36,7 +36,7 @@ val_dataloader:
         - { type: ConvertDtype }
 
     # CL
-    data_ratio: "7010"
+    data_ratio: "7010s"
     task_idx: 0
     buffer_mode: False
 

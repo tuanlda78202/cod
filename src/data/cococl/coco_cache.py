@@ -48,7 +48,7 @@ class CocoCache(CCD):
         if not isinstance(class_ids, list):
             class_ids = list(class_ids)
         self.class_ids = class_ids
-
+        print("Class IDS Input: ", class_ids)
         if class_ids is not None and ids_list == None:
             self.ids = []
 

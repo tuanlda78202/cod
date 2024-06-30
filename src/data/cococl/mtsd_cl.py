@@ -38,7 +38,8 @@ class MTSDDetectionCL(CocoCache):
         self.data_ratio = data_ratio
         divided_classes = data_setting(data_ratio)
         class_ids_current = divided_classes[self.task_idx]
-        buffer_ids = list(set(list(range(1, 91))) - set(class_ids_current))
+        print("Task ID", self.task_idx, class_ids_current)
+        buffer_ids = list(set(list(range(1, len(mtsd_category2name)+1))) - set(class_ids_current))
 
         super().__init__(
             img_folder,
@@ -52,13 +53,14 @@ class MTSDDetectionCL(CocoCache):
         )
 
         cats = {}
+        # print("B: ", class_ids_current, self.coco.cats)
         for class_id in class_ids_current:
             try:
                 cats[class_id] = self.coco.cats[class_id]
             except KeyError:
                 pass
         self.coco.cats = cats
-
+        print("After: ", cats)
         self._transforms = transforms
         self.prepare = ConvertCocoPolysToMask(return_masks, remap_mscoco_category)
         self.img_folder = img_folder

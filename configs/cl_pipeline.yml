@@ -1,6 +1,6 @@
 # WandB
-wandb_mode: "disabled"
-wandb_name: "7010s-10e-norm"
+wandb_mode: "online"
+wandb_name: "7010s-10e"
 
 # LoRA
 lora_train: False
@@ -9,6 +9,6 @@ lora_id: ""
 
 # CL Strategy
 lora_cl: False
-pseudo_label: True
-distill_attn: True
+pseudo_label: False
+distill_attn: False
 teacher_path: ""
